@@ -4,6 +4,7 @@
 #include "../../include/standart.h"
 #include "../../include/fs.h"
 #include "../../include/panic.h"
+#include "../../include/scheduler.h"
 #include "../../include/mm.h" // useless at now
 
 // swiss function
