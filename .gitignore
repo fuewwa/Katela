@@ -1,6 +1,7 @@
 # build files
 build/
 *.iso
+*.bin
 
 # idk
 *.a
