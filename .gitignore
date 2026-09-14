@@ -2,10 +2,11 @@
 build/
 *.iso
 *.bin
-
-# idk
 *.a
 *.o
+
+# for other developers
+.vscode/
 
 # archives
 *.tar
