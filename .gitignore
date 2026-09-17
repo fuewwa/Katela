@@ -1,7 +1,7 @@
 # build files
 build/
 *.iso
-iso/boot/kernel.bin
+*.bin
 *.a
 *.o
 *.img
