@@ -24,6 +24,7 @@ void help() {
 	print("beep - plays a sound\n");
     print("rename {old} {new} - renames file\n");
 	print("rm {name} - removes file\n");
+    print("dt - tests disk read/write\n");
     print("panic - requests system panic");
 }
 

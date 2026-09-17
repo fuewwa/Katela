@@ -4,6 +4,7 @@ build/
 *.bin
 *.a
 *.o
+*.img
 
 # for other developers
 .vscode/

@@ -1,6 +1,7 @@
 #include "../drivers/vga.h"
 #include "../drivers/keyboard.h"
 #include "../drivers/speaker.h"
+#include "../drivers/ata.h"
 #include "../../include/standart.h"
 #include "../../include/fs.h"
 #include "../../include/panic.h"
@@ -33,6 +34,7 @@ void swiss() {
 // main function
 void kernel_main() {
     init();
+    fs_load();
     print("\n\n> ");
 
     char buffer[64];
@@ -99,6 +101,33 @@ void kernel_main() {
 		speaker_beep();
 		speaker_off();
 
+	    } else if (strcmp(command, "dt") == 0) {
+
+		unsigned char out[512];
+		unsigned char in[512];
+		int i;
+
+		for (i = 0; i < 512; i++) {
+		    out[i] = (unsigned char)(i & 0xFF);
+		}
+
+		if (ata_write_sector(5, out) != 0) {
+		    print("disk: write failed\n");
+		} else if (ata_read_sector(5, in) != 0) {
+		    print("disk: read failed\n");
+		} else {
+		    int ok = 1;
+
+		    for (i = 0; i < 512; i++) {
+			if (in[i] != out[i]) {
+			    ok = 0;
+			    break;
+			}
+		    }
+
+		    print(ok ? "disk: ok\n" : "disk: mismatch\n");
+		}
+
 	    } else if (strcmp(command, "help") == 0) {
 
             help();
@@ -114,9 +143,10 @@ void kernel_main() {
 			        print("standart: file not found");
 		        } else {
 			        for (int i = idx; i < file_count - 1; i++) {
-			            files[i + 1];
+			            files[i] = files[i + 1];
 			        }
 			    file_count--;
+			    fs_save();
 		    }
 		}
 
@@ -133,6 +163,7 @@ void kernel_main() {
     	        } else {
         	    strcpy(files[file_count].name, args);
         	    file_count++;
+        	    fs_save();
 		    }
 
         } else if (strcmp(command, "rename") == 0) {
@@ -176,6 +207,7 @@ void kernel_main() {
             }
 
             strcpy(files[idx].name, new_name);
+            fs_save();
 
 	    } else if (strcmp(command, "see") == 0) {
 
@@ -234,6 +266,7 @@ void kernel_main() {
         	   j++;
     		}
     	        files[idx].data[j] = '\0';
+    	        fs_save();
 
             } else {
                 print("command not found\n");
