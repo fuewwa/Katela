@@ -35,4 +35,4 @@ run: iso disk.img
 	qemu-system-i386 -cdrom katela.iso -hda disk.img -machine pcspk-audiodev=snd -audiodev alsa,id=snd
 
 clean:
-	rm -rf build katela.iso
+	rm -rf build katela.iso disk.img
