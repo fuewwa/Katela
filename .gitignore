@@ -1,7 +1,7 @@
 # build files
 build/
 *.iso
-*.bin
+kernel.bin
 *.a
 *.o
 *.img
