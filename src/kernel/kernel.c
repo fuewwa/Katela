@@ -96,37 +96,37 @@ void kernel_main() {
                 asm volatile("cli");
                 while (1) asm volatile("hlt");
 
-	    } else if (strcmp(command, "beep") == 0) {
+	        } else if (strcmp(command, "beep") == 0) {
 		
-		speaker_beep();
-		speaker_off();
+		        speaker_beep();
+		        speaker_off();
 
-	    } else if (strcmp(command, "dt") == 0) {
+	        } else if (strcmp(command, "dt") == 0) {
 
-		unsigned char out[512];
-		unsigned char in[512];
-		int i;
+		        unsigned char out[512];
+		        unsigned char in[512];
+		        int i;
 
-		for (i = 0; i < 512; i++) {
-		    out[i] = (unsigned char)(i & 0xFF);
-		}
+		        for (i = 0; i < 512; i++) {
+		            out[i] = (unsigned char)(i & 0xFF);
+		        }
 
-		if (ata_write_sector(5, out) != 0) {
-		    print("disk: write failed\n");
-		} else if (ata_read_sector(5, in) != 0) {
-		    print("disk: read failed\n");
-		} else {
-		    int ok = 1;
+		        if (ata_write_sector(5, out) != 0) {
+		            print("disk: write failed\n");
+		        } else if (ata_read_sector(5, in) != 0) {
+		            print("disk: read failed\n");
+		        } else {
+		            int ok = 1;
 
-		    for (i = 0; i < 512; i++) {
-			if (in[i] != out[i]) {
-			    ok = 0;
-			    break;
-			}
-		    }
+		            for (i = 0; i < 512; i++) {
+			            if (in[i] != out[i]) {
+			                ok = 0;
+			                break;
+			            }
+		            }
 
-		    print(ok ? "disk: ok\n" : "disk: mismatch\n");
-		}
+		            print(ok ? "disk: ok\n" : "disk: mismatch\n");
+		        }
 
 	    } else if (strcmp(command, "help") == 0) {
 
