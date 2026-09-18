@@ -1,7 +1,7 @@
 #include "../../include/fs.h"
 #include "../drivers/ata.h"
 
-#define FS_IMAGE_SECTORS 6
+#define FS_IMAGE_SECTORS 10
 #define FS_IMAGE_SIZE (FS_IMAGE_SECTORS * ATA_SECTOR_SIZE)
 
 struct file files[MAX_FILES];

@@ -2,6 +2,8 @@
 
 extern void isr_timer(void);
 extern void isr_ignore(void);
+extern void isr_syscall(void);
+extern void isr_gpf(void);
 
 struct idt_entry {
     unsigned short base_low;
@@ -56,6 +58,8 @@ void idt_init(void) {
     }
 
     set_gate(0x20, (unsigned int)isr_timer, selector, 0x8E);
+    set_gate(0x0D, (unsigned int)isr_gpf, selector, 0x8E);
+    set_gate(0x80, (unsigned int)isr_syscall, selector, 0xEE);
 
     pointer.limit = sizeof(entries) - 1;
     pointer.base = (unsigned int)&entries;

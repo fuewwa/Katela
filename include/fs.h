@@ -2,7 +2,7 @@
 #define FS_H
 
 #define MAX_FILES 16
-#define FILE_DATA_SIZE 128
+#define FILE_DATA_SIZE 256
 #define FS_LBA_START 100
 #define FS_MAGIC 0x4B41544Cu
 

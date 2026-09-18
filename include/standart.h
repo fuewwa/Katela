@@ -8,6 +8,7 @@
 
 void init();
 void help();
+void execute_command(char *buffer);
 
 char *cpuinfo(void);
 int strlen(const char *str);

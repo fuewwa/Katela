@@ -1,15 +1,15 @@
 #include "../drivers/vga.h"
 #include "../drivers/keyboard.h"
-#include "../drivers/speaker.h"
-#include "../drivers/ata.h"
 #include "../../include/standart.h"
 #include "../../include/fs.h"
-#include "../../include/panic.h"
-#include "../../include/scheduler.h"
-#include "../../include/mm.h" // useless at now
+#include "../../include/gdt.h"
+#include "../../include/idt.h"
 
 // swiss function
 void swiss() {
+    static char buffer[FILE_DATA_SIZE + 40];
+    int index = 0;
+
     clear();
     print("Swiss editor (ESC to exit)\n\n");
 
@@ -19,22 +19,76 @@ void swiss() {
         if (c == 27) { // ESC
             break;
         } else if (c == '\b') {
-            backspace();
+            if (index > 0) {
+                index--;
+                backspace();
+            }
         } else if (c == '\n') {
+            if (index < (int)sizeof(buffer) - 1) {
+                buffer[index++] = '\n';
+            }
             print("\n");
         } else {
-            char str[2] = {c, 0};
-            print(str);
+            if (index < (int)sizeof(buffer) - 1) {
+                buffer[index++] = c;
+                char str[2] = {c, 0};
+                print(str);
+            }
         }
     }
 
+    buffer[index] = '\0';
     clear();
+
+    if (buffer[0] == '?' && buffer[1] == '<') {
+        int i = 2;
+        char name[32];
+        int n = 0;
+
+        while (buffer[i] != '>' && buffer[i] != '\n' && buffer[i] != '\0' && n < 31) {
+            name[n++] = buffer[i++];
+        }
+        name[n] = '\0';
+
+        if (buffer[i] == '>' && n > 0) {
+            i++;
+            if (buffer[i] == '\n') {
+                i++;
+            }
+
+            int idx = find_file(name);
+
+            if (idx == -1) {
+                if (file_count >= MAX_FILES) {
+                    print("file limit reached\n");
+                    return;
+                }
+
+                idx = file_count++;
+                strcpy(files[idx].name, name);
+            }
+
+            int k = 0;
+            while (buffer[i + k] != '\0' && k < FILE_DATA_SIZE - 1) {
+                files[idx].data[k] = buffer[i + k];
+                k++;
+            }
+            files[idx].data[k] = '\0';
+            fs_save();
+
+            print("saved script \"");
+            print(name);
+            print("\"\n");
+        }
+    }
 }
 
 // main function
 void kernel_main() {
     init();
     fs_load();
+    gdt_init();
+    idt_init();
     print("\n\n> ");
 
     char buffer[64];
@@ -52,225 +106,7 @@ void kernel_main() {
                 continue;
             }
 
-            // parse command
-            char command[64];
-            int i = 0;
-
-            while (buffer[i] != ' ' && buffer[i] != '\0') {
-                command[i] = buffer[i];
-                i++;
-            }
-            command[i] = '\0';
-
-            char *args = buffer + i;
-            if (*args == ' ') args++;
-
-            // commands
-            if (strcmp(command, "info") == 0) {
-
-                print("Distro: \"");
-                print(DISTRO);
-                print("\"\n");
-
-                print("Version: \"");
-                print(VERSION);
-                print("\"\n");
-
-            } else if (strcmp(command, "echo") == 0) {
-
-                print(args);
-                print("\n");
-
-	        } else if (strcmp(command, "swiss") == 0) {
-		        
-                swiss();
-
-            } else if (strcmp(command, "panic") == 0) {
-
-                panic("user requested panic");
-
-            } else if (strcmp(command, "off") == 0) {
-
-                print("You can safely turn off your PC now.\n");
-
-                asm volatile("cli");
-                while (1) asm volatile("hlt");
-
-	        } else if (strcmp(command, "beep") == 0) {
-		
-		        speaker_beep();
-		        speaker_off();
-
-	        } else if (strcmp(command, "dt") == 0) {
-
-		        unsigned char out[512];
-		        unsigned char in[512];
-		        int i;
-
-		        for (i = 0; i < 512; i++) {
-		            out[i] = (unsigned char)(i & 0xFF);
-		        }
-
-		        if (ata_write_sector(5, out) != 0) {
-		            print("disk: write failed\n");
-		        } else if (ata_read_sector(5, in) != 0) {
-		            print("disk: read failed\n");
-		        } else {
-		            int ok = 1;
-
-		            for (i = 0; i < 512; i++) {
-			            if (in[i] != out[i]) {
-			                ok = 0;
-			                break;
-			            }
-		            }
-
-		            print(ok ? "disk: ok\n" : "disk: mismatch\n");
-		        }
-
-	    } else if (strcmp(command, "help") == 0) {
-
-            help();
-		
-	    } else if (strcmp(command, "rm") == 0) {
-		
-		    if (args[0] == '\0') {
-                print("standart: filename required\n");
-		    } else {
-
-		        int idx = find_file(args);
-		        if (idx == -1) {
-			        print("standart: file not found");
-		        } else {
-			        for (int i = idx; i < file_count - 1; i++) {
-			            files[i] = files[i + 1];
-			        }
-			    file_count--;
-			    fs_save();
-		    }
-		}
-
-	    } else if (strcmp(command, "clear") == 0 || strcmp(command, "cls") == 0) {
-		
-            clear();
-
-	    } else if (strcmp(command, "create") == 0) {
-
-    		if (args[0] == '\0') {
-        	    print("name required\n");
-    		} else if (file_count >= MAX_FILES) {
-                    print("file limit reached\n");
-    	        } else {
-        	    strcpy(files[file_count].name, args);
-        	    file_count++;
-        	    fs_save();
-		    }
-
-        } else if (strcmp(command, "rename") == 0) {
-
-            char old_name[32];
-            char new_name[32];
-
-            int i = 0;
-
-            while (args[i] != ' ' && args[i] != '\0' && i < 31) {
-                old_name[i] = args[i];
-                i++;
-            }
-            old_name[i] = '\0';
-
-            if (args[i] == '\0') {
-                print("new filename required\n");
-                continue;
-            }
-
-            args += i + 1;
-
-            i = 0;
-
-            while (args[i] != ' ' && args[i] != '\0' && i < 31) {
-                new_name[i] = args[i];
-                i++;
-            }
-            new_name[i] = '\0';
-
-            int idx = find_file(old_name);
-
-            if (idx == -1) {
-                print("file not found\n");
-                continue;
-            }
-
-            if (find_file(new_name) != -1) {
-                print("file already exists\n");
-                continue;
-            }
-
-            strcpy(files[idx].name, new_name);
-            fs_save();
-
-	    } else if (strcmp(command, "see") == 0) {
-
-    		if (file_count == 0) {
-        	    print("files cannot be found\n");
-    		} else {
-                    for (int i = 0; i < file_count; i++) {
-                        print(files[i].name);
-                        print("\n");
-        	    }		
-    		}
-	    } else if (strcmp(command, "get") == 0) {
-
-    	        int idx = find_file(args);
-
-    		if (idx == -1) {
-        	    print("file not found\n");
-    		} else {
-        	    print(files[idx].data);
-                    print("\n");
-    		}
-	    } else if (strcmp(command, "set") == 0) {
-
-		char fname[32];
-    		char* data = args;
-
-    		int i = 0;
-    		while (data[i] != ' ' && data[i] != '\0') {
-        	    fname[i] = data[i];
-                    i++;
-		}
-    		fname[i] = '\0';
-
-    		if (data[i] == ' ') {
-        	    data += i + 1;
-    		} else {
-                    print("missing value\n");
-        	    continue;
-    		}
-
-    		int idx = find_file(fname);
-
-    		if (idx == -1) {
-        	    if (file_count >= MAX_FILES) {
-            	    	print("file limit reached\n");
-            	        continue;
-        	    }
-
-        	idx = file_count++;
-        	strcpy(files[idx].name, fname);
-    		}
-
-    		int j = 0;
-    		while (data[j] && j < FILE_DATA_SIZE - 1) {
-        	   files[idx].data[j] = data[j];
-        	   j++;
-    		}
-    	        files[idx].data[j] = '\0';
-    	        fs_save();
-
-            } else {
-                print("command not found\n");
-            }
+            execute_command(buffer);
 
             index = 0;
             print("\n> ");
