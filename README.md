@@ -10,6 +10,16 @@ Katela does **not** follow UNIX or POSIX conventions. It does not aim for POSIX 
 
 Katela exists to explore what a kernel can look like when it isn't bound by UNIX/POSIX conventions or built purely as a hobby exercise. Every subsystem — from the shell to the filesystem to the drivers — is designed intentionally as part of a cohesive, independent kernel, not assembled as disconnected experiments.
 
+## AI
+
+In principle, I allow the use of AI for development, but with some very important caveats
+
+- You need to at least understand what the AI is writing; the point isn't for it to simply do everything for you, but to eliminate tedious work and automate whatever can be automated
+- I do not allow the use of AI in very important areas
+- If you wrote code using AI, you must state in your pull request that you used AI while writing the code and that you assume full responsibility
+- I allow the use of AI in Markdown files, but please verify that the information in the file is accurate
+- Check that the code (written by AI) works properly and that there are no bugs that could lead to security issues
+
 ## Requirements
 
 To build and run Katela you need a cross-platform toolchain consisting of an assembler (NASM), a GCC-based cross/multilib compiler, GRUB tools for producing a bootable ISO, `xorriso` for ISO creation, and QEMU for emulation/testing (you also can try another VMs like virtualbox or wmware).
