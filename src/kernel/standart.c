@@ -7,6 +7,8 @@
 #include "../../include/usermode.h"
 #include "../../include/syscall.h"
 #include "../../include/kernel.h"
+#include "../../include/mem.h"
+#include "../../include/mm.h"
 
 static unsigned char ring3_stack[4096];
 static const char *g_exec_script;
@@ -22,7 +24,7 @@ static void uexit(void) {
 
 static void script_interpreter_entry(void) {
     const char *script = g_exec_script;
-    char line[FILE_DATA_SIZE];
+    char line[SHELL_LINE_SIZE];
     int i = 0;
     int j = 0;
 
@@ -56,11 +58,41 @@ static void script_interpreter_entry(void) {
     uexit();
 }
 
+static void print_uint(unsigned int value, int width) {
+    char digits[12];
+    int count = 0;
+    int i;
+
+    if (value == 0) {
+        digits[count++] = '0';
+    }
+
+    while (value > 0) {
+        digits[count++] = (char)('0' + value % 10);
+        value /= 10;
+    }
+
+    for (i = count; i < width; i++) {
+        print(" ");
+    }
+
+    for (i = count - 1; i >= 0; i--) {
+        char text[2] = { digits[i], '\0' };
+        print(text);
+    }
+}
+
+static void print_fs_error(int code) {
+    print("fs: ");
+    print(fs_error_text(code));
+    print("\n");
+}
+
 void execute_command(char *buffer) {
     char command[64];
     int i = 0;
 
-    while (buffer[i] != ' ' && buffer[i] != '\0') {
+    while (buffer[i] != ' ' && buffer[i] != '\0' && i < (int)sizeof(command) - 1) {
         command[i] = buffer[i];
         i++;
     }
@@ -138,16 +170,21 @@ void execute_command(char *buffer) {
             return;
         }
 
-        int idx = find_file(args);
+        unsigned int script_size;
+        int error;
+        char *script = fs_read_all(args, &script_size, &error);
 
-        if (idx == -1) {
-            print("file not found\n");
+        if (script == 0) {
+            print_fs_error(error);
             return;
         }
 
-        g_exec_script = files[idx].data;
+        g_exec_script = script;
 
         enter_usermode(script_interpreter_entry, ring3_stack + sizeof(ring3_stack));
+
+        g_exec_script = 0;
+        kfree(script);
 
     } else if (strcmp(command, "help") == 0) {
 
@@ -158,16 +195,10 @@ void execute_command(char *buffer) {
         if (args[0] == '\0') {
             print("standart: filename required\n");
         } else {
+            int result = fs_remove(args);
 
-            int idx = find_file(args);
-            if (idx == -1) {
-                print("standart: file not found");
-            } else {
-                for (int i = idx; i < file_count - 1; i++) {
-                    files[i] = files[i + 1];
-                }
-                file_count--;
-                fs_save();
+            if (result != FS_OK) {
+                print_fs_error(result);
             }
         }
 
@@ -179,22 +210,22 @@ void execute_command(char *buffer) {
 
         if (args[0] == '\0') {
             print("name required\n");
-        } else if (file_count >= MAX_FILES) {
-            print("file limit reached\n");
         } else {
-            strcpy(files[file_count].name, args);
-            file_count++;
-            fs_save();
+            int result = fs_create(args);
+
+            if (result != FS_OK) {
+                print_fs_error(result);
+            }
         }
 
     } else if (strcmp(command, "rename") == 0) {
 
-        char old_name[32];
-        char new_name[32];
+        char old_name[FS_NAME_MAX + 1];
+        char new_name[FS_NAME_MAX + 1];
 
         int i = 0;
 
-        while (args[i] != ' ' && args[i] != '\0' && i < 31) {
+        while (args[i] != ' ' && args[i] != '\0' && i < FS_NAME_MAX) {
             old_name[i] = args[i];
             i++;
         }
@@ -209,56 +240,73 @@ void execute_command(char *buffer) {
 
         i = 0;
 
-        while (args[i] != ' ' && args[i] != '\0' && i < 31) {
+        while (args[i] != ' ' && args[i] != '\0' && i < FS_NAME_MAX) {
             new_name[i] = args[i];
             i++;
         }
         new_name[i] = '\0';
 
-        int idx = find_file(old_name);
+        int result = fs_rename(old_name, new_name);
 
-        if (idx == -1) {
-            print("file not found\n");
-            return;
+        if (result != FS_OK) {
+            print_fs_error(result);
         }
-
-        if (find_file(new_name) != -1) {
-            print("file already exists\n");
-            return;
-        }
-
-        strcpy(files[idx].name, new_name);
-        fs_save();
 
     } else if (strcmp(command, "see") == 0) {
 
-        if (file_count == 0) {
+        struct fs_iter it;
+        struct fs_info info;
+        int result;
+        int shown = 0;
+
+        fs_iter_begin(&it);
+
+        while ((result = fs_iter_next(&it, &info)) > 0) {
+            print_uint(info.size, 10);
+            print("  ");
+            print(info.name);
+            print("\n");
+            shown++;
+        }
+
+        if (result < 0) {
+            print_fs_error(result);
+        } else if (shown == 0) {
             print("files cannot be found\n");
-        } else {
-            for (int i = 0; i < file_count; i++) {
-                print(files[i].name);
-                print("\n");
-            }
         }
 
     } else if (strcmp(command, "get") == 0) {
 
-        int idx = find_file(args);
+        struct fs_file file;
+        int result = fs_open(args, &file, 0);
 
-        if (idx == -1) {
-            print("file not found\n");
+        if (result != FS_OK) {
+            print_fs_error(result);
         } else {
-            print(files[idx].data);
+            char chunk[513];
+            unsigned int offset = 0;
+            int got;
+
+            while ((got = fs_read(&file, offset, chunk, 512)) > 0) {
+                chunk[got] = '\0';
+                print(chunk);
+                offset += (unsigned int)got;
+            }
+
+            if (got < 0) {
+                print_fs_error(got);
+            }
+
             print("\n");
         }
 
     } else if (strcmp(command, "set") == 0) {
 
-        char fname[32];
+        char fname[FS_NAME_MAX + 1];
         char* data = args;
 
         int i = 0;
-        while (data[i] != ' ' && data[i] != '\0') {
+        while (data[i] != ' ' && data[i] != '\0' && i < FS_NAME_MAX) {
             fname[i] = data[i];
             i++;
         }
@@ -271,25 +319,48 @@ void execute_command(char *buffer) {
             return;
         }
 
-        int idx = find_file(fname);
+        int result = fs_write_all(fname, data, (unsigned int)strlen(data));
 
-        if (idx == -1) {
-            if (file_count >= MAX_FILES) {
-                print("file limit reached\n");
-                return;
+        if (result != FS_OK) {
+            print_fs_error(result);
+        }
+
+    } else if (strcmp(command, "df") == 0) {
+
+        struct fs_stats stats;
+        int result = fs_usage(&stats);
+
+        if (result != FS_OK) {
+            print_fs_error(result);
+        } else {
+            unsigned int unit = stats.cluster_bytes / 512;
+            unsigned int total_kb = stats.total_clusters * unit / 2;
+            unsigned int free_kb = stats.free_clusters * unit / 2;
+
+            print("total: ");
+            print_uint(total_kb, 0);
+            print(" KB\nused:  ");
+            print_uint(((stats.total_clusters - stats.free_clusters) * unit + 1) / 2, 0);
+            print(" KB\nfree:  ");
+            print_uint(free_kb, 0);
+            print(" KB\ncluster: ");
+            print_uint(stats.cluster_bytes, 0);
+            print(" bytes\n");
+        }
+
+    } else if (strcmp(command, "format") == 0) {
+
+        if (strcmp(args, "yes") != 0) {
+            print("this erases all files, run: format yes\n");
+        } else {
+            int result = fs_format();
+
+            if (result != FS_OK) {
+                print_fs_error(result);
+            } else {
+                print("disk formatted\n");
             }
-
-            idx = file_count++;
-            strcpy(files[idx].name, fname);
         }
-
-        int j = 0;
-        while (data[j] && j < FILE_DATA_SIZE - 1) {
-            files[idx].data[j] = data[j];
-            j++;
-        }
-        files[idx].data[j] = '\0';
-        fs_save();
 
     } else {
         print("command not found\n");
@@ -312,13 +383,15 @@ void help() {
     print("clear or cls - clears all console\n");
     print("swiss - open text editor (?<name> as first line saves a script)\n");
     print("create {name} - create file\n");
-    print("see - list files\n");
+    print("see - list files with sizes\n");
     print("set {name} {text} - write to file\n");
     print("get {name} - read file\n");
     print("beep - plays a sound\n");
     print("rename {old} {new} - renames file\n");
     print("rm {name} - removes file\n");
     print("dt - tests disk read/write\n");
+    print("df - shows disk usage\n");
+    print("format yes - erases and formats the disk\n");
     print("exec {name} - runs a script file in ring 3\n");
     print("panic - requests system panic");
 }
@@ -352,14 +425,4 @@ char *cpuinfo(void)
     vendor[12] = '\0';
 
     return vendor;
-}
-
-int strlen(const char *str)
-{
-    int len = 0;
-
-    while (str[len] != '\0')
-        len++;
-
-    return len;
 }

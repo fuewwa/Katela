@@ -13,6 +13,7 @@
 #define ATA_CMD_READ    0x20
 #define ATA_CMD_WRITE   0x30
 #define ATA_CMD_FLUSH   0xE7
+#define ATA_CMD_IDENTIFY 0xEC
 
 #define ATA_SR_BSY  0x80
 #define ATA_SR_DRQ  0x08
@@ -153,4 +154,49 @@ int ata_read_sector(unsigned int lba, unsigned char *buffer) {
 
 int ata_write_sector(unsigned int lba, const unsigned char *buffer) {
     return ata_write_sectors(lba, 1, buffer);
+}
+
+unsigned int ata_total_sectors(void) {
+    unsigned short identify[256];
+    unsigned int i;
+    unsigned char status;
+
+    outb(ATA_DRIVE_HEAD, 0xA0);
+
+    for (i = 0; i < 4; i++) {
+        inb(ATA_STATUS);
+    }
+
+    outb(ATA_SECCOUNT, 0);
+    outb(ATA_LBA_LOW, 0);
+    outb(ATA_LBA_MID, 0);
+    outb(ATA_LBA_HIGH, 0);
+    outb(ATA_COMMAND, ATA_CMD_IDENTIFY);
+
+    status = inb(ATA_STATUS);
+    if (status == 0 || status == 0xFF) {
+        return 0;
+    }
+
+    if (ata_wait_bsy() != 0) {
+        return 0;
+    }
+
+    if (inb(ATA_LBA_MID) != 0 || inb(ATA_LBA_HIGH) != 0) {
+        return 0;
+    }
+
+    if (ata_wait_drq() != 0) {
+        return 0;
+    }
+
+    for (i = 0; i < 256; i++) {
+        identify[i] = inw(ATA_DATA);
+    }
+
+    if (!(identify[49] & (1 << 9))) {
+        return 0;
+    }
+
+    return ((unsigned int)identify[61] << 16) | identify[60];
 }

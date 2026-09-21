@@ -6,11 +6,12 @@
 
 // hi :3
 
+#define SHELL_LINE_SIZE 256
+
 void init();
 void help();
 void execute_command(char *buffer);
 
 char *cpuinfo(void);
-int strlen(const char *str);
 
 #endif

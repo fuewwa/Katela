@@ -1,9 +1,9 @@
 #include "../../include/mm.h"
 #include "../../include/panic.h"
-#include "../../include/fs.h"
+#include "../../include/mem.h"
 #include "../drivers/vga.h"
 
-#define HEAP_SIZE 65536
+#define HEAP_SIZE (4 * 1024 * 1024)
 
 struct block {
     unsigned int size;
