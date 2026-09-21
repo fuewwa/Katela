@@ -5,6 +5,7 @@ build/
 *.a
 *.o
 *.img
+*.raw
 logs/
 
 # for other developers
