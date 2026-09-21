@@ -5,6 +5,7 @@ build/
 *.a
 *.o
 *.img
+logs/
 
 # for other developers
 .vscode/
