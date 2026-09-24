@@ -10,6 +10,7 @@ logs/
 
 # for other developers
 .vscode/
+*.patch
 
 # archives
 *.tar
