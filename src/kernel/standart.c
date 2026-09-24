@@ -82,6 +82,26 @@ static void print_uint(unsigned int value, int width) {
     }
 }
 
+static void print_size_kb(unsigned int bytes) {
+    unsigned int whole = bytes / 1024;
+    unsigned int hundredths = ((bytes % 1024) * 100 + 1023) / 1024;
+
+    if (hundredths == 100) {
+        whole++;
+        hundredths = 0;
+    }
+
+    print_uint(whole, 7);
+    print(".");
+
+    if (hundredths < 10) {
+        print("0");
+    }
+
+    print_uint(hundredths, 0);
+    print(" KB");
+}
+
 static void print_fs_error(int code) {
     print("fs: ");
     print(fs_error_text(code));
@@ -264,7 +284,7 @@ void execute_command(char *buffer) {
         fs_iter_begin(&it);
 
         while ((result = fs_iter_next(&it, &info)) > 0) {
-            print_uint(info.size, 10);
+            print_size_kb(info.size);
             print("  ");
             print(info.name);
             print("\n");
