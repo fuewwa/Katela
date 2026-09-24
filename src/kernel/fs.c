@@ -1,9 +1,9 @@
 #include "../../include/fs.h"
 #include "../../include/mem.h"
 #include "../../include/mm.h"
-#include "../drivers/ata.h"
+#include "../drivers/disk.h"
 
-#define SECTOR_SIZE ((unsigned int)ATA_SECTOR_SIZE)
+#define SECTOR_SIZE ((unsigned int)DISK_SECTOR_SIZE)
 #define SECTOR_SHIFT 9u
 #define FAT_PER_SECTOR (SECTOR_SIZE / 4)
 #define CHAIN_END 0xFFFFFFFFu
@@ -75,22 +75,22 @@ static unsigned char zero_block[SECTOR_SIZE * ZERO_BATCH] __attribute__((aligned
 
 static int block_read(unsigned int sector, void *buffer)
 {
-    return ata_read_sector(FS_LBA_START + sector, ((unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
+    return disk_read_sector(FS_LBA_START + sector, ((unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
 }
 
 static int block_write(unsigned int sector, const void *buffer)
 {
-    return ata_write_sector(FS_LBA_START + sector, ((const unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
+    return disk_write_sector(FS_LBA_START + sector, ((const unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
 }
 
 static int blocks_read(unsigned int sector, unsigned int count, void *buffer)
 {
-    return ata_read_sectors(FS_LBA_START + sector, count, ((unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
+    return disk_read_sectors(FS_LBA_START + sector, count, ((unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
 }
 
 static int blocks_write(unsigned int sector, unsigned int count, const void *buffer)
 {
-    return ata_write_sectors(FS_LBA_START + sector, count, ((const unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
+    return disk_write_sectors(FS_LBA_START + sector, count, ((const unsigned char *)(buffer))) == 0 ? FS_OK : FS_ERR_IO;
 }
 
 static unsigned int load_u32(const unsigned char *bytes)
@@ -781,7 +781,7 @@ int fs_init(void)
     mounted = 0;
     fat_cache_sector = NO_SECTOR;
     fat_dirty = 0;
-    disk_sectors = ata_total_sectors();
+    disk_sectors = disk_total_sectors();
 
     if (disk_sectors == 0) {
         return FS_ERR_NODEV;
@@ -826,7 +826,7 @@ int fs_init(void)
 int fs_format(void)
 {
     if (disk_sectors == 0) {
-        disk_sectors = ata_total_sectors();
+        disk_sectors = disk_total_sectors();
 
         if (disk_sectors == 0) {
             return FS_ERR_NODEV;

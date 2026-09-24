@@ -79,6 +79,12 @@ Build and run Katela in QEMU:
 make run
 ```
 
+Build and run Katela in QEMU with the disk attached as an NVMe device:
+
+```bash
+make run-nvme
+```
+
 Clean all build artifacts:
 
 ```bash

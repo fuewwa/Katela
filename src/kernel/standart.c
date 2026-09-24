@@ -1,7 +1,7 @@
 #include "../../include/standart.h"
 #include "../drivers/vga.h"
 #include "../drivers/speaker.h"
-#include "../drivers/ata.h"
+#include "../drivers/disk.h"
 #include "../../include/fs.h"
 #include "../../include/panic.h"
 #include "../../include/usermode.h"
@@ -146,9 +146,9 @@ void execute_command(char *buffer) {
             out[i] = (unsigned char)(i & 0xFF);
         }
 
-        if (ata_write_sector(5, out) != 0) {
+        if (disk_write_sector(5, out) != 0) {
             print("disk: write failed\n");
-        } else if (ata_read_sector(5, in) != 0) {
+        } else if (disk_read_sector(5, in) != 0) {
             print("disk: read failed\n");
         } else {
             int ok = 1;
@@ -160,7 +160,9 @@ void execute_command(char *buffer) {
                 }
             }
 
-            print(ok ? "disk: ok\n" : "disk: mismatch\n");
+            print("disk: ");
+            print(disk_name());
+            print(ok ? " ok\n" : " mismatch\n");
         }
 
     } else if (strcmp(command, "exec") == 0) {
