@@ -38,6 +38,12 @@ sudo pacman -S base-devel nasm grub xorriso qemu-full make gcc mtools
 
 > Note: on Arch, 32-bit multilib support requires enabling the `multilib` repository in `/etc/pacman.conf` first (uncomment the `[multilib]` section), then running `sudo pacman -Syu`.
 
+### Fedora
+
+```bash
+sudo dnf install gcc make nasm grub2-tools xorriso qemu-system-x86-core
+```
+
 ### macOS
 
 Install [Homebrew](https://brew.sh) first, then:
