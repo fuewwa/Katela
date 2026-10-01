@@ -17,6 +17,7 @@ In principle, I allow the use of AI for development, but with some very importan
 - You need to at least understand what the AI is writing; the point isn't for it to simply do everything for you, but to eliminate tedious work and automate whatever can be automated
 - I do not allow the use of AI in very important areas
 - If you wrote code using AI, you must state in your pull request that you used AI while writing the code and that you assume full responsibility
+- In your pull request, you should specify which AI and AI model you used
 - I allow the use of AI in Markdown files, but please verify that the information in the file is accurate
 - Check that the code (written by AI) works properly and that there are no bugs that could lead to security issues
 
