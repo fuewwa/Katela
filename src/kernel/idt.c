@@ -1,6 +1,7 @@
 #include "idt.h"
 
 extern void isr_timer(void);
+extern void isr_yield(void);
 extern void isr_ignore(void);
 extern void isr_syscall(void);
 extern void isr_gpf(void);
@@ -58,6 +59,7 @@ void idt_init(void) {
     }
 
     set_gate(0x20, (unsigned int)isr_timer, selector, 0x8E);
+    set_gate(0x81, (unsigned int)isr_yield, selector, 0x8E);
     set_gate(0x0D, (unsigned int)isr_gpf, selector, 0x8E);
     set_gate(0x80, (unsigned int)isr_syscall, selector, 0xEE);
 
