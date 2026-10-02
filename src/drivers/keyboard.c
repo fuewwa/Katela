@@ -1,4 +1,5 @@
 #include "keyboard.h"
+#include "../../include/scheduler.h"
 
 unsigned char inb(unsigned short port) {
     unsigned char result;
@@ -81,6 +82,8 @@ char get_key() {
 		default:
     		     continue;
             }
+        } else {
+            task_sleep(10);
         }
     }
 }
