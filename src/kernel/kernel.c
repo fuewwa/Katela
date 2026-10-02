@@ -6,6 +6,7 @@
 #include "../../include/idt.h"
 #include "../../include/mem.h"
 #include "../../include/mm.h"
+#include "../../include/scheduler.h"
 
 #define SWISS_START_SIZE 1024
 #define SWISS_MAX_SIZE (512 * 1024)
@@ -103,7 +104,8 @@ void kernel_main() {
     }
 
     gdt_init();
-    idt_init();
+    scheduler_init();
+    scheduler_start();
     print("\n\n> ");
 
     char buffer[SHELL_LINE_SIZE];

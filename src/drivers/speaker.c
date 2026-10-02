@@ -1,4 +1,5 @@
 #include "speaker.h"
+#include "../../include/scheduler.h"
 
 #define PIT_CH2_PORT    0x42
 #define PIT_CMD_PORT    0x43
@@ -49,8 +50,6 @@ void speaker_off(void) {
 
 void speaker_beep(void) {
     speaker_tone(1000);
-    
-    for (volatile int i = 0; i < 500000; i++);
-    
+    task_sleep(200);
     speaker_off();
 }
