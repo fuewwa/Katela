@@ -25,7 +25,7 @@ In principle, I allow the use of AI for development, but with some very importan
 
 To build and run Katela you need a cross-platform toolchain consisting of an assembler (NASM), a GCC-based cross/multilib compiler, GRUB tools for producing a bootable ISO, `xorriso` for ISO creation, and QEMU for emulation/testing (you also can try another VMs like virtualbox or wmware).
 
-### Debian / Ubuntu
+### Debian-based
 
 ```bash
 sudo apt install build-essential nasm grub-pc-bin xorriso qemu-system-x86 make gcc-multilib
