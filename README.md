@@ -45,6 +45,12 @@ sudo pacman -S base-devel nasm grub xorriso qemu-full make gcc mtools
 sudo dnf install gcc make nasm grub2-tools xorriso qemu-system-x86-core
 ```
 
+### Gentoo Linux
+
+```bash
+sudo emerge --ask sys-devel/gcc sys-devel/make dev-lang/nasm sys-boot/grub dev-libs/libisoburn app-emulation/qemu
+```
+
 ### OpenSUSE
 
 ```bash
