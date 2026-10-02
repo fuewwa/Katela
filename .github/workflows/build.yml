@@ -1,0 +1,42 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential nasm grub-pc-bin grub-common xorriso mtools make gcc-multilib
+
+      - name: Build
+        run: |
+          make clean
+          make
+
+      - name: Verify artifacts
+        run: |
+          test -s build/kernel.bin
+          test -s katela.iso
+          file build/kernel.bin
+          ls -lh katela.iso
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: katela-iso
+          path: katela.iso
+          if-no-files-found: error
