@@ -39,6 +39,27 @@ sudo pacman -S base-devel nasm grub xorriso qemu-full make gcc mtools
 
 > Note: on Arch, 32-bit multilib support requires enabling the `multilib` repository in `/etc/pacman.conf` first (uncomment the `[multilib]` section), then running `sudo pacman -Syu`.
 
+### NixOs
+
+On NixOS, you don't install packages with a traditional command like `sudo dnf install`. Instead, you declare them in your system configuration file (`/etc/nixos/configuration.nix`) and then rebuild the system. Here is the configuration block to achieve the same result:
+
+```nix
+environment.systemPackages = with pkgs; [
+  gcc
+  gnumake
+  nasm
+  grub2
+  xorriso
+  qemu
+];
+```
+
+After adding this to your `configuration.nix`, apply the changes by running:
+
+```bash
+sudo nixos-rebuild switch
+```
+
 ### Fedora
 
 ```bash
