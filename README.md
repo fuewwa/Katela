@@ -84,6 +84,14 @@ sudo xbps-install -S gcc make nasm grub xorriso qemu
 sudo apk add gcc make nasm grub grub-efi xorriso qemu-system-x86_64
 ```
 
+### Slackware
+
+```bash
+sudo slackpkg install gcc make nasm grub xorriso
+```
+
+> Note: QEMU is not in the official Slackware repository. You need to build from source.
+
 ### Gentoo Linux
 
 ```bash
