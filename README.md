@@ -60,6 +60,12 @@ After adding this to your `configuration.nix`, apply the changes by running:
 sudo nixos-rebuild switch
 ```
 
+### FreeBSD
+
+```bash
+sudo pkg install gcc gmake nasm grub2 xorriso qemu
+```
+
 ### Fedora
 
 ```bash
