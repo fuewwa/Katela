@@ -45,6 +45,12 @@ sudo pacman -S base-devel nasm grub xorriso qemu-full make gcc mtools
 sudo dnf install gcc make nasm grub2-tools xorriso qemu-system-x86-core
 ```
 
+### Void linux
+
+```bash
+sudo xbps-install -S gcc make nasm grub xorriso qemu
+```
+
 ### Alpine Linux
 
 ```bash
