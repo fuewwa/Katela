@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Katela - a kernel written from scratch</title>
+<meta name="description" content="Katela is a standalone kernel written from scratch in C and x86 Assembly, with its own shell and its own filesystem.">
+<meta name="theme-color" content="#1d2021">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#top"><img src="logo.png" alt="" width="32" height="32">Katela</a>
+  <nav>
+    <a href="#philosophy">Philosophy</a>
+    <a href="#inside">Inside</a>
+    <a href="#build">Build</a>
+    <a href="https://github.com/fuewwa/Katela">Source</a>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-text">
+      <h1>A kernel that doesn't ask permission from UNIX.</h1>
+      <p class="lead">Katela is a standalone kernel written from scratch in C and x86 Assembly. Its own core, its own shell, its own filesystem.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/fuewwa/Katela/releases">Download a release</a>
+        <a class="btn" href="https://github.com/fuewwa/Katela">View the source</a>
+      </div>
+    </div>
+    <div class="hero-art">
+      <img class="logo" src="logo.png" alt="Katela logo" width="200" height="200">
+      <div class="screen" aria-label="Example Katela boot output">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <pre id="boot"><span class="l dim">katela kernel</span>
+<span class="l"><b class="ok">ok</b>  user mode, ring 3</span>
+<span class="l"><b class="ok">ok</b>  nvme controller</span>
+<span class="l"><b class="ok">ok</b>  filesystem mounted</span>
+<span class="l"><b class="ok">ok</b>  audio driver</span>
+<span class="l"><b class="pr">katela&gt;</b> see</span>
+<span class="l dim">sizes are shown in kilobytes</span>
+<span class="l"><b class="pr">katela&gt;</b> <u class="cur"></u></span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="philosophy" class="block">
+    <h2>Philosophy</h2>
+    <div class="cols">
+      <p>Katela is not a hobby OS, not a toy OS, and not a learning exercise that stops at "hello world". It is built as a genuine kernel project, meant to be real and usable rather than a proof of concept.</p>
+      <p>Katela does not follow UNIX or POSIX. It has no goal of POSIX compliance, UNIX-like semantics or compatibility with existing UNIX tooling, and it uses its own system call conventions and its own shell behavior. The shell, the filesystem and the drivers are designed together as one cohesive system.</p>
+    </div>
+    <dl class="facts">
+      <div><dt>Started</dt><dd>April 26, 2026</dd></div>
+      <div><dt>Written in</dt><dd>C and x86 Assembly</dd></div>
+      <div><dt>License</dt><dd>GPL v3.0</dd></div>
+    </dl>
+  </section>
+
+  <section id="inside" class="block">
+    <h2>What's inside</h2>
+    <ul class="rows">
+      <li><h3>User mode</h3><p>Programs run in ring 3, separated from the kernel.</p></li>
+      <li><h3>A real filesystem</h3><p>Early builds kept everything in memory with a limit of 16 files. Now storage is limited only by the size of your drive.</p></li>
+      <li><h3>NVMe driver</h3><p>Support for modern drives, added in release 1.5nvme.</p></li>
+      <li><h3>Audio driver</h3><p>Sound support, introduced in release 1.3.</p></li>
+      <li><h3>Shell with scripts</h3><p>A built-in shell with custom shell scripts and commands such as <code>help</code>, <code>see</code> and <code>panic</code>.</p></li>
+    </ul>
+  </section>
+
+  <section id="build" class="block">
+    <h2>Build it</h2>
+    <p class="note">You need NASM, a GCC-based cross or multilib compiler, GRUB tools, xorriso and QEMU. VirtualBox and VMware should also work.</p>
+    <div class="cols code">
+      <div>
+        <h3>Debian and Ubuntu</h3>
+        <pre class="cmd">sudo apt install build-essential nasm grub-pc-bin \
+  xorriso qemu-system-x86 make gcc-multilib</pre>
+      </div>
+      <div>
+        <h3>Arch Linux</h3>
+        <pre class="cmd">sudo pacman -S base-devel nasm grub xorriso \
+  qemu-full make gcc mtools</pre>
+      </div>
+    </div>
+    <p class="note">The README also covers Fedora, Alpine, Gentoo, openSUSE, macOS and Windows (WSL2 is the recommended route).</p>
+    <ul class="rows targets">
+      <li><h3><code>make</code></h3><p>Build Katela.</p></li>
+      <li><h3><code>make run</code></h3><p>Build and run in QEMU.</p></li>
+      <li><h3><code>make run-nvme</code></h3><p>Build and run in QEMU with the disk attached as an NVMe device.</p></li>
+      <li><h3><code>make clean</code></h3><p>Remove all build artifacts.</p></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span>Katela is released under the GPL v3.0.</span>
+  <a href="https://github.com/fuewwa/Katela">github.com/fuewwa/Katela</a>
+</footer>
+<script src="main.js"></script>
+</body>
+</html>
