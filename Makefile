@@ -3,8 +3,9 @@ include config/requirements.mk
 # Make sure to add its existence check to the MISSING_TOOLS block in Makefile
 # And add a test that checks the build fails when this tool is missing
 
-BUILD=build
-ISO=iso
+include config/config.mk
+# Whole variables (if not requirements)
+# Paste and create into config.mk
 
 all: iso
 
