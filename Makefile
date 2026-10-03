@@ -1,15 +1,8 @@
-MIN_MAKE_VERSION := 3.81
+include config/requirements.mk
 
 ifneq ($(firstword $(sort $(MAKE_VERSION) $(MIN_MAKE_VERSION))),$(MIN_MAKE_VERSION))
 $(error GNU Make $(MIN_MAKE_VERSION) or newer is required, found $(MAKE_VERSION))
 endif
-
-GOALS := $(if $(MAKECMDGOALS),$(MAKECMDGOALS),all)
-
-find_missing = $(strip $(foreach t,$(1),$(if $(shell command -v $(t) 2>/dev/null),,$(t))))
-find_first = $(firstword $(foreach t,$(1),$(if $(shell command -v $(t) 2>/dev/null),$(t))))
-
-GRUB_MKRESCUE := $(call find_first,grub-mkrescue grub2-mkrescue)
 
 ifneq ($(filter-out clean,$(GOALS)),)
 MISSING_TOOLS := $(call find_missing,nasm gcc ld)
