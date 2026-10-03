@@ -1,4 +1,4 @@
-#include "../../include/gdt.h"
+#include "gdt.h"
 
 struct gdt_entry {
     unsigned short limit_low;

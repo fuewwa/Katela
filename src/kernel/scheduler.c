@@ -1,5 +1,7 @@
 #include "scheduler.h"
 #include "idt.h"
+#include "pic.h"
+#include "pit.h"
 #include "../../include/mm.h"
 #include "../../include/panic.h"
 
