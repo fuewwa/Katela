@@ -57,3 +57,7 @@ run-nvme: iso disk.img
 
 clean:
 	rm -rf build katela.iso disk.img
+
+.PHONY: all iso run run-nvme clean
+# Add Makefile's command names here
+
