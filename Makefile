@@ -1,4 +1,7 @@
 include config/requirements.mk
+# If you are adding a new dependency
+# Make sure to add its existence check to the MISSING_TOOLS block in Makefile
+# And add a test that checks the build fails when this tool is missing
 
 ifneq ($(firstword $(sort $(MAKE_VERSION) $(MIN_MAKE_VERSION))),$(MIN_MAKE_VERSION))
 $(error GNU Make $(MIN_MAKE_VERSION) or newer is required, found $(MAKE_VERSION))
