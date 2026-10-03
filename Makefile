@@ -1,3 +1,9 @@
+MIN_MAKE_VERSION := 3.81
+
+ifneq ($(firstword $(sort $(MAKE_VERSION) $(MIN_MAKE_VERSION))),$(MIN_MAKE_VERSION))
+$(error GNU Make $(MIN_MAKE_VERSION) or newer is required, found $(MAKE_VERSION))
+endif
+
 BUILD=build
 ISO=iso
 
