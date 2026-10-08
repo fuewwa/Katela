@@ -11,6 +11,7 @@ logs/
 # for other developers
 .vscode/
 *.patch
+*.diff
 
 # archives
 *.tar
