@@ -21,3 +21,4 @@ logs/
 *.zip
 *.rar
 *.7z
+*.lz4
