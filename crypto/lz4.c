@@ -2,10 +2,6 @@
 #include "mem.h"
 
 #define LZ4_HASH_BITS 12
-#define LZ4_MIN_MATCH 4
-#define LZ4_LAST_LITERALS 5
-#define LZ4_MATCH_FIND_LIMIT 12
-#define LZ4_MAX_OFFSET 65535
 
 static unsigned int hash_table[1 << LZ4_HASH_BITS];
 
@@ -43,9 +39,9 @@ static void write_extra_length(unsigned char **out, unsigned int value)
 	*(*out)++ = (unsigned char)remaining;
 }
 
-static int write_sequence(unsigned char **out, unsigned char *end,
-						  const unsigned char *literals, unsigned int literal_length,
-						  unsigned int offset, unsigned int match_length)
+int lz4_write_sequence(unsigned char **out, unsigned char *end,
+					   const unsigned char *literals, unsigned int literal_length,
+					   unsigned int offset, unsigned int match_length)
 {
 	unsigned int match_code = 0;
 	unsigned int needed = 1 + literal_length + extra_length_bytes(literal_length);
@@ -149,7 +145,7 @@ int lz4_compress(const void *source, unsigned int size, void *dest, unsigned int
 					length++;
 				}
 
-				if (!write_sequence(&out, out_end, src + anchor, pos - anchor, pos - candidate, length)) {
+				if (!lz4_write_sequence(&out, out_end, src + anchor, pos - anchor, pos - candidate, length)) {
 					return -1;
 				}
 
@@ -162,7 +158,7 @@ int lz4_compress(const void *source, unsigned int size, void *dest, unsigned int
 		pos++;
 	}
 
-	if (!write_sequence(&out, out_end, src + anchor, size - anchor, 0, 0)) {
+	if (!lz4_write_sequence(&out, out_end, src + anchor, size - anchor, 0, 0)) {
 		return -1;
 	}
 
