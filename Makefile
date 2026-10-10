@@ -38,6 +38,7 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c crypto/lz4hc.c -o $(BUILD)/lz4hc.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c crypto/sha256.c -o $(BUILD)/sha256.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c crypto/sha1.c -o $(BUILD)/sha1.o
+	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/addr.c -o $(BUILD)/addr.o
 	ld -m elf_i386 -T linker.ld -o $(BUILD)/kernel.bin -nostdlib \
 	$(BUILD)/boot.o $(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o \
 	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
@@ -45,7 +46,8 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/gdt.o $(BUILD)/syscall.o $(BUILD)/usermode.o $(BUILD)/mem.o \
 	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o \
 	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
-	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o
+	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o \
+	$(BUILD)/addr.o
 
 iso: $(BUILD)/kernel.bin
 	mkdir -p $(ISO)/boot
