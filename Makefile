@@ -40,6 +40,11 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c crypto/sha1.c -o $(BUILD)/sha1.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/addr.c -o $(BUILD)/addr.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/checksum.c -o $(BUILD)/checksum.o
+	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/ethernet.c -o $(BUILD)/ethernet.o
+	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/arp.c -o $(BUILD)/arp.o
+	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/ipv4.c -o $(BUILD)/ipv4.o
+	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/icmp.c -o $(BUILD)/icmp.o
+	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c net/udp.c -o $(BUILD)/udp.o
 	ld -m elf_i386 -T linker.ld -o $(BUILD)/kernel.bin -nostdlib \
 	$(BUILD)/boot.o $(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o \
 	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
@@ -48,7 +53,8 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o \
 	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
 	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o \
-	$(BUILD)/addr.o $(BUILD)/checksum.o
+	$(BUILD)/addr.o $(BUILD)/checksum.o $(BUILD)/ethernet.o \
+	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o
 
 iso: $(BUILD)/kernel.bin
 	mkdir -p $(ISO)/boot
