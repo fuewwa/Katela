@@ -1,6 +1,6 @@
 root = true
 
-[{*.{c,py,h,mk,rst},Makefile,Makefile.*}]
+[{*.{c,py,h,yaml,yml,mk,rst},Makefile,Makefile.*}]
 charset = utf-8
 end_of_line = lf
 insert_final_newline = true
@@ -9,3 +9,7 @@ indent_size = 4
 
 [*.py]
 indent_style = space
+
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
