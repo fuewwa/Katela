@@ -31,6 +31,7 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c src/boot/idt.c -o $(BUILD)/idt.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c src/boot/pic.c -o $(BUILD)/pic.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c src/boot/pit.c -o $(BUILD)/pit.o
+	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c src/boot/irq.c -o $(BUILD)/irq.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c src/kernel/scheduler.c -o $(BUILD)/scheduler.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c src/boot/gdt.c -o $(BUILD)/gdt.o
 	gcc -m32 -ffreestanding -Iinclude -nostdlib -fno-stack-protector -c src/kernel/syscall.c -o $(BUILD)/syscall.o
@@ -49,7 +50,7 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/boot.o $(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o \
 	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
 	$(BUILD)/idt.o $(BUILD)/scheduler.o $(BUILD)/interrupts.o $(BUILD)/ata.o \
-	$(BUILD)/gdt.o $(BUILD)/syscall.o $(BUILD)/usermode.o $(BUILD)/mem.o \
+	$(BUILD)/gdt.o $(BUILD)/syscall.o $(BUILD)/usermode.o $(BUILD)/mem.o $(BUILD)/irq.o \
 	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o \
 	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
 	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o \

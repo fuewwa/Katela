@@ -8,6 +8,7 @@ extern task_exit
 extern syscall_dispatch
 extern gpf_handler
 extern g_kernel_resume_esp
+extern irq_dispatch
 
 global isr_timer
 global isr_yield
@@ -45,6 +46,24 @@ isr_yield:
 
 isr_ignore:
     iretd
+
+%macro irq_entry 1
+global isr_irq%1
+isr_irq%1:
+    pushad
+    cld
+    push dword %1
+    call irq_dispatch
+    add esp, 4
+    popad
+    iretd
+%endmacro
+
+%assign irq_number 1
+%rep 15
+    irq_entry irq_number
+%assign irq_number irq_number + 1
+%endrep
 
 isr_syscall:
     cmp eax, 2
