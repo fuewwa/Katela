@@ -13,6 +13,7 @@ logs/
 .vscode/
 *.patch
 *.diff
+*.log
 
 # archives
 *.tar
