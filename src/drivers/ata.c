@@ -9,6 +9,7 @@
 #define ATA_DRIVE_HEAD  0x1F6
 #define ATA_STATUS      0x1F7
 #define ATA_COMMAND     0x1F7
+#define ATA_CONTROL     0x3F6
 
 #define ATA_CMD_READ    0x20
 #define ATA_CMD_WRITE   0x30
@@ -16,8 +17,14 @@
 #define ATA_CMD_IDENTIFY 0xEC
 
 #define ATA_SR_BSY  0x80
+#define ATA_SR_DF   0x20
 #define ATA_SR_DRQ  0x08
 #define ATA_SR_ERR  0x01
+
+#define ATA_CTRL_SRST 0x04
+
+#define ATA_TIMEOUT 3000000
+#define ATA_RETRIES 3
 
 static inline void outb(unsigned short port, unsigned char value) {
     asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -39,8 +46,16 @@ static inline unsigned short inw(unsigned short port) {
     return value;
 }
 
+static void ata_delay(void) {
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        inb(ATA_CONTROL);
+    }
+}
+
 static int ata_wait_bsy(void) {
-    int timeout = 100000;
+    int timeout = ATA_TIMEOUT;
 
     while (timeout--) {
         if (!(inb(ATA_STATUS) & ATA_SR_BSY)) {
@@ -52,12 +67,16 @@ static int ata_wait_bsy(void) {
 }
 
 static int ata_wait_drq(void) {
-    int timeout = 100000;
+    int timeout = ATA_TIMEOUT;
 
     while (timeout--) {
         unsigned char status = inb(ATA_STATUS);
 
-        if (status & ATA_SR_ERR) {
+        if (status & ATA_SR_BSY) {
+            continue;
+        }
+
+        if (status & (ATA_SR_ERR | ATA_SR_DF)) {
             return -1;
         }
 
@@ -69,32 +88,95 @@ static int ata_wait_drq(void) {
     return -1;
 }
 
-static void ata_select(unsigned int lba) {
-    outb(ATA_DRIVE_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
-}
+static int ata_finish(void) {
+    int timeout = ATA_TIMEOUT;
 
-int ata_read_sectors(unsigned int lba, unsigned int count, unsigned char *buffer) {
-    unsigned int i;
-    unsigned int j;
+    ata_delay();
 
-    if (count == 0 || count > 255) {
-        return -1;
+    while (timeout--) {
+        unsigned char status = inb(ATA_STATUS);
+
+        if (status & ATA_SR_BSY) {
+            continue;
+        }
+
+        if (status & (ATA_SR_ERR | ATA_SR_DF | ATA_SR_DRQ)) {
+            return -1;
+        }
+
+        return 0;
     }
 
+    return -1;
+}
+
+static void ata_reset(void) {
+    int i;
+
+    outb(ATA_CONTROL, ATA_CTRL_SRST);
+
+    for (i = 0; i < 64; i++) {
+        inb(ATA_CONTROL);
+    }
+
+    outb(ATA_CONTROL, 0);
+
+    for (i = 0; i < 10000; i++) {
+        inb(ATA_CONTROL);
+    }
+
+    ata_wait_bsy();
+}
+
+static void ata_select(unsigned int lba) {
+    outb(ATA_DRIVE_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
+    ata_delay();
+}
+
+static int ata_prepare(unsigned int lba) {
     if (ata_wait_bsy() != 0) {
         return -1;
     }
 
     ata_select(lba);
 
+    if (ata_wait_bsy() != 0) {
+        return -1;
+    }
+
+    if (inb(ATA_STATUS) & ATA_SR_DRQ) {
+        ata_reset();
+        ata_select(lba);
+
+        if (ata_wait_bsy() != 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static void ata_setup(unsigned int lba, unsigned int count, unsigned char command) {
     outb(ATA_SECCOUNT, (unsigned char)count);
     outb(ATA_LBA_LOW, (unsigned char)(lba & 0xFF));
     outb(ATA_LBA_MID, (unsigned char)((lba >> 8) & 0xFF));
     outb(ATA_LBA_HIGH, (unsigned char)((lba >> 16) & 0xFF));
-    outb(ATA_COMMAND, ATA_CMD_READ);
+    outb(ATA_COMMAND, command);
+    ata_delay();
+}
+
+static int ata_read_once(unsigned int lba, unsigned int count, unsigned char *buffer) {
+    unsigned int i;
+    unsigned int j;
+
+    if (ata_prepare(lba) != 0) {
+        return -1;
+    }
+
+    ata_setup(lba, count, ATA_CMD_READ);
 
     for (i = 0; i < count; i++) {
-        if (ata_wait_bsy() != 0 || ata_wait_drq() != 0) {
+        if (ata_wait_drq() != 0) {
             return -1;
         }
 
@@ -103,35 +185,27 @@ int ata_read_sectors(unsigned int lba, unsigned int count, unsigned char *buffer
             buffer[i * ATA_SECTOR_SIZE + j * 2] = (unsigned char)(word & 0xFF);
             buffer[i * ATA_SECTOR_SIZE + j * 2 + 1] = (unsigned char)((word >> 8) & 0xFF);
         }
+
+        ata_delay();
     }
 
-    return 0;
+    return ata_finish();
 }
 
-int ata_write_sectors(unsigned int lba, unsigned int count, const unsigned char *buffer) {
+static int ata_write_once(unsigned int lba, unsigned int count, const unsigned char *buffer) {
     unsigned int i;
     unsigned int j;
 
-    if (count == 0 || count > 255) {
+    if (ata_prepare(lba) != 0) {
         return -1;
     }
 
-    if (ata_wait_bsy() != 0) {
-        return -1;
-    }
-
-    ata_select(lba);
-
-    outb(ATA_SECCOUNT, (unsigned char)count);
-    outb(ATA_LBA_LOW, (unsigned char)(lba & 0xFF));
-    outb(ATA_LBA_MID, (unsigned char)((lba >> 8) & 0xFF));
-    outb(ATA_LBA_HIGH, (unsigned char)((lba >> 16) & 0xFF));
-    outb(ATA_COMMAND, ATA_CMD_WRITE);
+    ata_setup(lba, count, ATA_CMD_WRITE);
 
     for (i = 0; i < count; i++) {
         unsigned short word;
 
-        if (ata_wait_bsy() != 0 || ata_wait_drq() != 0) {
+        if (ata_wait_drq() != 0) {
             return -1;
         }
 
@@ -140,12 +214,54 @@ int ata_write_sectors(unsigned int lba, unsigned int count, const unsigned char 
             word |= (unsigned short)buffer[i * ATA_SECTOR_SIZE + j * 2 + 1] << 8;
             outw(ATA_DATA, word);
         }
+
+        ata_delay();
+    }
+
+    if (ata_finish() != 0) {
+        return -1;
     }
 
     outb(ATA_COMMAND, ATA_CMD_FLUSH);
-    ata_wait_bsy();
+    ata_delay();
 
-    return 0;
+    return ata_finish();
+}
+
+int ata_read_sectors(unsigned int lba, unsigned int count, unsigned char *buffer) {
+    int attempt;
+
+    if (count == 0 || count > 255) {
+        return -1;
+    }
+
+    for (attempt = 0; attempt < ATA_RETRIES; attempt++) {
+        if (ata_read_once(lba, count, buffer) == 0) {
+            return 0;
+        }
+
+        ata_reset();
+    }
+
+    return -1;
+}
+
+int ata_write_sectors(unsigned int lba, unsigned int count, const unsigned char *buffer) {
+    int attempt;
+
+    if (count == 0 || count > 255) {
+        return -1;
+    }
+
+    for (attempt = 0; attempt < ATA_RETRIES; attempt++) {
+        if (ata_write_once(lba, count, buffer) == 0) {
+            return 0;
+        }
+
+        ata_reset();
+    }
+
+    return -1;
 }
 
 int ata_read_sector(unsigned int lba, unsigned char *buffer) {

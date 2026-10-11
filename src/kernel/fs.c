@@ -717,12 +717,19 @@ static int format_now(void)
     return result;
 }
 
-static unsigned char *old_image_load(void)
+static unsigned char *old_image_load(int *error)
 {
     unsigned char *image = ((unsigned char *)(kmalloc(OLD_IMAGE_SECTORS * SECTOR_SIZE)));
 
+    *error = FS_OK;
+
+    if (image == 0) {
+        return 0;
+    }
+
     if (blocks_read(0, OLD_IMAGE_SECTORS, image) != FS_OK) {
         kfree(image);
+        *error = FS_ERR_IO;
         return 0;
     }
 
@@ -801,7 +808,12 @@ int fs_init(void)
         return result;
     }
 
-    unsigned char *old = old_image_load();
+    int old_error;
+    unsigned char *old = old_image_load(&old_error);
+
+    if (old_error != FS_OK) {
+        return old_error;
+    }
 
     result = format_now();
 
