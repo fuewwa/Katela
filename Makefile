@@ -39,6 +39,7 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/lz4hc.c -o $(BUILD)/lz4hc.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/sha256.c -o $(BUILD)/sha256.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/sha1.c -o $(BUILD)/sha1.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/base64.c -o $(BUILD)/base64.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/addr.c -o $(BUILD)/addr.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/checksum.c -o $(BUILD)/checksum.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/ethernet.c -o $(BUILD)/ethernet.o
@@ -53,7 +54,7 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/gdt.o $(BUILD)/syscall.o $(BUILD)/usermode.o $(BUILD)/mem.o $(BUILD)/irq.o \
 	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o \
 	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
-	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o \
+	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o $(BUILD)/base64.o \
 	$(BUILD)/addr.o $(BUILD)/checksum.o $(BUILD)/ethernet.o \
 	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o
 
