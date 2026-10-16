@@ -9,6 +9,9 @@ build/
 logs/
 *.elf
 
+# tests
+iso/bin/test
+
 # for other developers
 .vscode/
 *.patch
