@@ -12,6 +12,9 @@ logs/
 # tests
 iso/bin/test
 
+# other
+*.S
+
 # for other developers
 .vscode/
 *.patch
