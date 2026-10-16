@@ -24,8 +24,5 @@ void bundle_install(void)
 			print(fs_error_text(result));
 			continue;
 		}
-
-		print("\ninstalled ");
-		print(entry->name);
 	}
 }
