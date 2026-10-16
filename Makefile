@@ -48,7 +48,31 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/ipv4.c -o $(BUILD)/ipv4.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/icmp.c -o $(BUILD)/icmp.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/udp.c -o $(BUILD)/udp.o
+	{ \
+	echo '.section .rodata'; \
+	n=0; \
+	for f in $(ISO)/bin/*; do \
+		[ -f "$$f" ] || continue; \
+		echo ".Lname$$n: .asciz \"$$(basename "$$f")\""; \
+		echo ".Lstart$$n: .incbin \"$$f\""; \
+		echo ".Lend$$n:"; \
+		n=$$((n + 1)); \
+	done; \
+	echo '.align 4'; \
+	echo '.global bundle_table'; \
+	echo 'bundle_table:'; \
+	i=0; \
+	while [ $$i -lt $$n ]; do \
+		echo ".long .Lname$$i, .Lstart$$i, .Lend$$i"; \
+		i=$$((i + 1)); \
+	done; \
+	echo '.long 0, 0, 0'; \
+	echo '.section .note.GNU-stack,"",@progbits'; \
+	} > $(BUILD)/bundle.S
+	gcc -m32 -c $(BUILD)/bundle.S -o $(BUILD)/bundle_data.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/bundle.c -o $(BUILD)/bundle.o
 	ld -m elf_i386 -T linker.ld -o $(BUILD)/kernel.bin -nostdlib \
+	$(BUILD)/bundle.o $(BUILD)/bundle_data.o \
 	$(BUILD)/boot.o $(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o \
 	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
 	$(BUILD)/idt.o $(BUILD)/scheduler.o $(BUILD)/interrupts.o $(BUILD)/ata.o \

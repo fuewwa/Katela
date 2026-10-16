@@ -7,6 +7,7 @@
 #include "../../include/mem.h"
 #include "../../include/mm.h"
 #include "../../include/scheduler.h"
+#include "../../include/bundle.h"
 
 #define SWISS_START_SIZE 1024
 #define SWISS_MAX_SIZE (512 * 1024)
@@ -101,6 +102,10 @@ void kernel_main() {
     } else if (mount != FS_INIT_MOUNTED) {
         print("\n\nfs: ");
         print(fs_error_text(mount));
+    }
+
+    if (mount >= 0) {
+        bundle_install();
     }
 
     gdt_init();
