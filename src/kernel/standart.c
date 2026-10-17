@@ -414,7 +414,7 @@ void help() {
     print("dt - tests disk read/write\n");
     print("df - shows disk usage\n");
     print("format yes - erases and formats the disk\n");
-    print("exec {name} - runs a script file in ring 3\n");
+    print("exec {name} - runs a executable file\n");
     print("panic - requests system panic");
 }
 
