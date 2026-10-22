@@ -1,14 +1,11 @@
 #include "vga.h"
+#include "../../include/io.h"
 
 #define WIDTH 80
 #define HEIGHT 25
 
 static int pos = 0;
 static char* video = (char*)0xB8000;
-
-void outb(unsigned short port, unsigned char val) {
-    __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
-}
 
 static inline void update_cursor() {
     int cursor = pos / 2;

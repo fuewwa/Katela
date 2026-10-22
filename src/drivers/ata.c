@@ -1,4 +1,5 @@
 #include "ata.h"
+#include "../../include/io.h"
 
 #define ATA_DATA        0x1F0
 #define ATA_ERROR       0x1F1
@@ -25,26 +26,6 @@
 
 #define ATA_TIMEOUT 3000000
 #define ATA_RETRIES 3
-
-static inline void outb(unsigned short port, unsigned char value) {
-    asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
-}
-
-static inline unsigned char inb(unsigned short port) {
-    unsigned char value;
-    asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
-
-static inline void outw(unsigned short port, unsigned short value) {
-    asm volatile("outw %0, %1" : : "a"(value), "Nd"(port));
-}
-
-static inline unsigned short inw(unsigned short port) {
-    unsigned short value;
-    asm volatile("inw %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
 
 static void ata_delay(void) {
     int i;

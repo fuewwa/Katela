@@ -1,14 +1,12 @@
 #include "speaker.h"
 #include "../../include/scheduler.h"
+#include "../../include/io.h"
 
 #define PIT_CH2_PORT    0x42
 #define PIT_CMD_PORT    0x43
 #define SPEAKER_PORT    0x61
 
 #define PIT_CMD_CH2_MODE3 0xB6
-
-unsigned char inb(unsigned short port);
-void outb(unsigned short port, unsigned char value);
 
 static void speaker_enable(void) {
     unsigned char tmp = inb(SPEAKER_PORT);
