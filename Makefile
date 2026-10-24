@@ -27,6 +27,8 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/pci.c -o $(BUILD)/pci.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/nvme.c -o $(BUILD)/nvme.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/disk.c -o $(BUILD)/disk.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/rtl8139.c -o $(BUILD)/rtl8139.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/net.c -o $(BUILD)/net.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/standart.c -o $(BUILD)/standart.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/boot/idt.c -o $(BUILD)/idt.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/boot/pic.c -o $(BUILD)/pic.o
@@ -77,7 +79,7 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
 	$(BUILD)/idt.o $(BUILD)/scheduler.o $(BUILD)/interrupts.o $(BUILD)/ata.o \
 	$(BUILD)/gdt.o $(BUILD)/syscall.o $(BUILD)/usermode.o $(BUILD)/mem.o $(BUILD)/irq.o \
-	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o \
+	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o $(BUILD)/rtl8139.o $(BUILD)/net.o \
 	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
 	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o $(BUILD)/base64.o $(BUILD)/crc32.o \
 	$(BUILD)/addr.o $(BUILD)/checksum.o $(BUILD)/ethernet.o \
@@ -92,10 +94,10 @@ disk.img:
 	qemu-img create -f raw disk.img 16M
 
 run: iso disk.img
-	qemu-system-i386 -cdrom katela.iso -hda disk.img -machine pcspk-audiodev=snd -audiodev alsa,id=snd
+	qemu-system-i386 -cdrom katela.iso -hda disk.img -netdev user,id=net0 -device rtl8139,netdev=net0 -machine pcspk-audiodev=snd -audiodev alsa,id=snd
 
 run-nvme: iso disk.img
-	qemu-system-i386 -cdrom katela.iso -drive file=disk.img,if=none,id=nvm,format=raw -device nvme,serial=katela,drive=nvm -machine pcspk-audiodev=snd -audiodev alsa,id=snd
+	qemu-system-i386 -cdrom katela.iso -drive file=disk.img,if=none,id=nvm,format=raw -device nvme,serial=katela,drive=nvm -netdev user,id=net0 -device rtl8139,netdev=net0 -machine pcspk-audiodev=snd -audiodev alsa,id=snd
 
 clean:
 	rm -rf build katela.iso disk.img

@@ -8,6 +8,7 @@
 #include "../../include/mm.h"
 #include "../../include/scheduler.h"
 #include "../../include/bundle.h"
+#include "../../include/net.h"
 
 #define SWISS_START_SIZE 1024
 #define SWISS_MAX_SIZE (512 * 1024)
@@ -111,6 +112,7 @@ void kernel_main() {
     gdt_init();
     scheduler_init();
     scheduler_start();
+    net_init();
     print("\n\n> ");
 
     char buffer[SHELL_LINE_SIZE];

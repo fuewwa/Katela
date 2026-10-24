@@ -7,7 +7,9 @@
 #define PCI_REG_HEADER      0x0C
 #define PCI_REG_BAR0        0x10
 #define PCI_REG_BAR1        0x14
+#define PCI_REG_INTERRUPT   0x3C
 
+#define PCI_COMMAND_IO          0x0001u
 #define PCI_COMMAND_MEMORY      0x0002u
 #define PCI_COMMAND_MASTER      0x0004u
 #define PCI_COMMAND_NO_INTX     0x0400u
@@ -21,6 +23,7 @@ struct pci_device {
 unsigned int pci_read32(const struct pci_device *dev, unsigned char offset);
 void pci_write32(const struct pci_device *dev, unsigned char offset, unsigned int value);
 int pci_find_class(unsigned char class_code, unsigned char subclass, unsigned char prog_if, struct pci_device *dev);
+int pci_find_device(unsigned short vendor, unsigned short device, struct pci_device *dev);
 void pci_enable(const struct pci_device *dev, unsigned int bits);
 
 #endif

@@ -9,6 +9,8 @@
 #include "../../include/kernel.h"
 #include "../../include/mem.h"
 #include "../../include/mm.h"
+#include "../../include/net.h"
+#include "../../include/scheduler.h"
 
 static unsigned char ring3_stack[4096];
 static const char *g_exec_script;
@@ -100,6 +102,89 @@ static void print_size_kb(unsigned int bytes) {
 
     print_uint(hundredths, 0);
     print(" KB");
+}
+
+static void print_ip(const struct ipv4_addr *ip) {
+    char text[IPV4_STRING_SIZE];
+
+    ipv4_format(ip, text);
+    print(text);
+}
+
+static void print_mac(const struct mac_addr *mac) {
+    char text[MAC_STRING_SIZE];
+
+    mac_format(mac, text);
+    print(text);
+}
+
+static void ping_command(const char *args) {
+    struct ipv4_addr target;
+    unsigned int received = 0;
+    unsigned int i;
+
+    if (!net_ready()) {
+        print("net: no network card\n");
+        return;
+    }
+
+    if (ipv4_parse(args, &target) != 0) {
+        print("usage: ping {ip}\n");
+        return;
+    }
+
+    print("pinging ");
+    print_ip(&target);
+    print("\n");
+
+    for (i = 0; i < 4; i++) {
+        unsigned int elapsed = 0;
+        int result = net_ping(&target, 1000, &elapsed);
+
+        if (result == NET_OK) {
+            received++;
+            print("reply from ");
+            print_ip(&target);
+
+            if (elapsed < 1000 / TICK_HZ) {
+                print(": time<");
+                print_uint(1000 / TICK_HZ, 0);
+            } else {
+                print(": time=");
+                print_uint(elapsed, 0);
+            }
+
+            print(" ms\n");
+        } else if (result == NET_ERR_NO_ROUTE) {
+            print("no route: arp got no answer\n");
+        } else if (result == NET_ERR_TIMEOUT) {
+            print("request timed out\n");
+        } else {
+            print("send failed\n");
+        }
+
+        if (i < 3) {
+            task_sleep(500);
+        }
+    }
+
+    print_uint(received, 0);
+    print(" of 4 received\n");
+}
+
+static void netinfo_command(void) {
+    if (!net_ready()) {
+        print("net: no network card\n");
+        return;
+    }
+
+    print("mac:     ");
+    print_mac(net_mac());
+    print("\nip:      ");
+    print_ip(net_ip());
+    print("\ngateway: ");
+    print_ip(net_gateway());
+    print("\n");
 }
 
 static void print_fs_error(int code) {
@@ -370,6 +455,14 @@ void execute_command(char *buffer) {
             print(" bytes\n");
         }
 
+    } else if (strcmp(command, "ping") == 0) {
+
+        ping_command(args);
+
+    } else if (strcmp(command, "netinfo") == 0) {
+
+        netinfo_command();
+
     } else if (strcmp(command, "format") == 0) {
 
         if (strcmp(args, "yes") != 0) {
@@ -415,6 +508,8 @@ void help() {
     print("df - shows disk usage\n");
     print("format yes - erases and formats the disk\n");
     print("exec {name} - runs a executable file\n");
+    print("ping {ip} - sends 4 echo requests\n");
+    print("netinfo - shows network configuration\n");
     print("panic - requests system panic");
 }
 

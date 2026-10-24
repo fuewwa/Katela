@@ -22,15 +22,21 @@ void pci_write32(const struct pci_device *dev, unsigned char offset, unsigned in
     outl(PCI_DATA_PORT, value);
 }
 
-static int class_matches(const struct pci_device *dev, unsigned char class_code, unsigned char subclass, unsigned char prog_if) {
+static int match_class(const struct pci_device *dev, const unsigned int *key) {
     unsigned int reg = pci_read32(dev, PCI_REG_CLASS);
 
-    return (unsigned char)(reg >> 24) == class_code
-        && (unsigned char)(reg >> 16) == subclass
-        && (unsigned char)(reg >> 8) == prog_if;
+    return (unsigned char)(reg >> 24) == key[0]
+        && (unsigned char)(reg >> 16) == key[1]
+        && (unsigned char)(reg >> 8) == key[2];
 }
 
-int pci_find_class(unsigned char class_code, unsigned char subclass, unsigned char prog_if, struct pci_device *dev) {
+static int match_id(const struct pci_device *dev, const unsigned int *key) {
+    unsigned int reg = pci_read32(dev, PCI_REG_ID);
+
+    return (reg & 0xFFFFu) == key[0] && (reg >> 16) == key[1];
+}
+
+static int scan(int (*match)(const struct pci_device *, const unsigned int *), const unsigned int *key, struct pci_device *dev) {
     unsigned int bus;
     unsigned int slot;
     unsigned int func;
@@ -59,7 +65,7 @@ int pci_find_class(unsigned char class_code, unsigned char subclass, unsigned ch
                     continue;
                 }
 
-                if (class_matches(&probe, class_code, subclass, prog_if)) {
+                if (match(&probe, key)) {
                     *dev = probe;
                     return 0;
                 }
@@ -68,6 +74,25 @@ int pci_find_class(unsigned char class_code, unsigned char subclass, unsigned ch
     }
 
     return -1;
+}
+
+int pci_find_class(unsigned char class_code, unsigned char subclass, unsigned char prog_if, struct pci_device *dev) {
+    unsigned int key[3];
+
+    key[0] = class_code;
+    key[1] = subclass;
+    key[2] = prog_if;
+
+    return scan(match_class, key, dev);
+}
+
+int pci_find_device(unsigned short vendor, unsigned short device, struct pci_device *dev) {
+    unsigned int key[2];
+
+    key[0] = vendor;
+    key[1] = device;
+
+    return scan(match_id, key, dev);
 }
 
 void pci_enable(const struct pci_device *dev, unsigned int bits) {
