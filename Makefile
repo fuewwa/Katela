@@ -50,6 +50,7 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/ipv4.c -o $(BUILD)/ipv4.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/icmp.c -o $(BUILD)/icmp.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/udp.c -o $(BUILD)/udp.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/dns.c -o $(BUILD)/dns.o
 	{ \
 	echo '.section .rodata'; \
 	n=0; \
@@ -83,7 +84,7 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
 	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o $(BUILD)/base64.o $(BUILD)/crc32.o \
 	$(BUILD)/addr.o $(BUILD)/checksum.o $(BUILD)/ethernet.o \
-	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o
+	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o $(BUILD)/dns.o
 
 iso: $(BUILD)/kernel.bin
 	mkdir -p $(ISO)/boot

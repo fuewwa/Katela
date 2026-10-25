@@ -4,14 +4,19 @@
 #include "../../include/scheduler.h"
 #include "../drivers/rtl8139.h"
 #include "../../net/arp.h"
+#include "../../net/dns.h"
 #include "../../net/ethernet.h"
 #include "../../net/icmp.h"
 #include "../../net/ipv4.h"
+#include "../../net/udp.h"
 
 #define PING_ID 0x4B54
 #define PING_PAYLOAD_SIZE 32
 #define ARP_ATTEMPTS 3
 #define ARP_WAIT_MS 1000
+#define DNS_ATTEMPTS 3
+#define DNS_PORT_BASE 49152
+#define DNS_PORT_COUNT 16384
 
 struct resolve_state {
 	const struct ipv4_addr *ip;
@@ -21,6 +26,7 @@ struct resolve_state {
 static struct mac_addr own_mac;
 static struct ipv4_addr own_ip = {{10, 0, 2, 15}};
 static struct ipv4_addr gateway = {{10, 0, 2, 2}};
+static struct ipv4_addr dns_server = {{10, 0, 2, 3}};
 static struct ipv4_addr netmask = {{255, 255, 255, 0}};
 static struct arp_table table;
 static struct wait_queue events;
@@ -36,6 +42,18 @@ static unsigned short echo_sequence;
 static volatile int echo_waiting;
 static volatile int echo_received;
 static volatile unsigned int echo_time;
+
+static unsigned char dns_query[DNS_MESSAGE_MAX];
+static unsigned char dns_datagram[UDP_HEADER_SIZE + DNS_MESSAGE_MAX];
+static unsigned char dns_packet[IPV4_HEADER_SIZE + UDP_HEADER_SIZE + DNS_MESSAGE_MAX];
+static unsigned char dns_frame[ETHERNET_HEADER_SIZE + IPV4_HEADER_SIZE + UDP_HEADER_SIZE + DNS_MESSAGE_MAX];
+static char dns_name[DNS_NAME_MAX + 1];
+static struct ipv4_addr dns_address;
+static unsigned short dns_id;
+static unsigned short dns_local_port;
+static volatile int dns_waiting;
+static volatile int dns_done;
+static volatile int dns_status;
 
 static int send_ipv4(const struct mac_addr *destination, const struct ipv4_addr *target,
 		unsigned char protocol, const void *payload, unsigned int size,
@@ -165,6 +183,34 @@ static void handle_icmp(const struct ethernet_header *frame_header, const struct
 	}
 }
 
+static void handle_udp(const struct ipv4_header *ip, const unsigned char *data, unsigned int size)
+{
+	struct udp_header udp;
+	const unsigned char *payload;
+	unsigned int payload_size;
+	struct ipv4_addr address;
+	int result;
+
+	if (udp_parse(data, size, &ip->source, &ip->destination, &udp, &payload, &payload_size) != 0) {
+		return;
+	}
+
+	if (!dns_waiting || udp.destination_port != dns_local_port || udp.source_port != DNS_PORT
+		|| !ipv4_equal(&ip->source, &dns_server)) {
+		return;
+	}
+
+	result = dns_response_parse(payload, payload_size, dns_id, dns_name, &address);
+	if (result == DNS_ERR_MALFORMED || result == DNS_ERR_MISMATCH) {
+		return;
+	}
+
+	dns_address = address;
+	dns_status = result;
+	dns_done = 1;
+	wait_queue_wake_all(&events);
+}
+
 static void handle_ipv4(const struct ethernet_header *frame_header, const unsigned char *data, unsigned int size)
 {
 	struct ipv4_header ip;
@@ -181,6 +227,8 @@ static void handle_ipv4(const struct ethernet_header *frame_header, const unsign
 
 	if (ip.protocol == IPV4_PROTOCOL_ICMP) {
 		handle_icmp(frame_header, &ip, payload, payload_size);
+	} else if (ip.protocol == IPV4_PROTOCOL_UDP) {
+		handle_udp(&ip, payload, payload_size);
 	}
 }
 
@@ -214,6 +262,23 @@ static void receive_task(void)
 			handle_frame(rx_frame, (unsigned int)size);
 		}
 	}
+}
+
+static int dns_ready(void *arg)
+{
+	(void)arg;
+	return dns_done;
+}
+
+static unsigned int entropy(void)
+{
+	unsigned int low;
+	unsigned int high;
+
+	asm volatile("rdtsc" : "=a"(low), "=d"(high));
+	(void)high;
+
+	return low ^ (low >> 16);
 }
 
 static int echo_ready(void *arg)
@@ -306,6 +371,77 @@ int net_ping(const struct ipv4_addr *target, unsigned int timeout_ms, unsigned i
 	return NET_OK;
 }
 
+int net_resolve(const char *name, struct ipv4_addr *address, unsigned int timeout_ms)
+{
+	struct mac_addr destination;
+	const struct ipv4_addr *next_hop;
+	unsigned int query_size;
+	unsigned int datagram_size;
+	unsigned int attempt;
+	unsigned int i;
+
+	if (!active) {
+		return NET_ERR_NO_DEVICE;
+	}
+
+	for (i = 0; name[i] != 0; i++) {
+		if (i >= DNS_NAME_MAX) {
+			return NET_ERR_NAME;
+		}
+		dns_name[i] = name[i];
+	}
+	dns_name[i] = 0;
+
+	if (dns_query_build(dns_query, sizeof(dns_query), 0, dns_name) == 0) {
+		return NET_ERR_NAME;
+	}
+
+	next_hop = ipv4_in_subnet(&dns_server, &own_ip, &netmask) ? &dns_server : &gateway;
+
+	if (resolve(next_hop, &destination) != 0) {
+		return NET_ERR_NO_ROUTE;
+	}
+
+	for (attempt = 0; attempt < DNS_ATTEMPTS; attempt++) {
+		unsigned int random = entropy();
+
+		dns_id = (unsigned short)random;
+		dns_local_port = (unsigned short)(DNS_PORT_BASE + (random >> 3) % DNS_PORT_COUNT);
+		dns_done = 0;
+		dns_status = 0;
+
+		query_size = dns_query_build(dns_query, sizeof(dns_query), dns_id, dns_name);
+		datagram_size = udp_build(dns_datagram, sizeof(dns_datagram), &own_ip, &dns_server,
+				dns_local_port, DNS_PORT, dns_query, query_size);
+		if (query_size == 0 || datagram_size == 0) {
+			return NET_ERR_NAME;
+		}
+
+		dns_waiting = 1;
+
+		if (send_ipv4(&destination, &dns_server, IPV4_PROTOCOL_UDP, dns_datagram, datagram_size,
+				dns_packet, sizeof(dns_packet), dns_frame, sizeof(dns_frame)) != 0) {
+			dns_waiting = 0;
+			return NET_ERR_SEND;
+		}
+
+		if (wait_queue_wait_until(&events, dns_ready, 0, timeout_ms) == WAIT_OK) {
+			dns_waiting = 0;
+
+			if (dns_status == 0) {
+				*address = dns_address;
+				return NET_OK;
+			}
+
+			return dns_status == DNS_ERR_NXDOMAIN ? NET_ERR_NXDOMAIN : NET_ERR_DNS;
+		}
+
+		dns_waiting = 0;
+	}
+
+	return NET_ERR_TIMEOUT;
+}
+
 const struct mac_addr *net_mac(void)
 {
 	return &own_mac;
@@ -319,4 +455,9 @@ const struct ipv4_addr *net_ip(void)
 const struct ipv4_addr *net_gateway(void)
 {
 	return &gateway;
+}
+
+const struct ipv4_addr *net_dns(void)
+{
+	return &dns_server;
 }

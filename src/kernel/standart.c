@@ -118,6 +118,48 @@ static void print_mac(const struct mac_addr *mac) {
     print(text);
 }
 
+static void print_resolve_error(int code) {
+    if (code == NET_ERR_NAME) {
+        print("invalid name\n");
+    } else if (code == NET_ERR_NXDOMAIN) {
+        print("name not found\n");
+    } else if (code == NET_ERR_NO_ROUTE) {
+        print("no route: arp got no answer\n");
+    } else if (code == NET_ERR_TIMEOUT) {
+        print("dns request timed out\n");
+    } else if (code == NET_ERR_DNS) {
+        print("dns server could not answer\n");
+    } else {
+        print("send failed\n");
+    }
+}
+
+static void resolve_command(const char *args) {
+    struct ipv4_addr address;
+    int result;
+
+    if (!net_ready()) {
+        print("net: no network card\n");
+        return;
+    }
+
+    if (args[0] == 0) {
+        print("usage: resolve {name}\n");
+        return;
+    }
+
+    result = net_resolve(args, &address, 1500);
+    if (result != NET_OK) {
+        print_resolve_error(result);
+        return;
+    }
+
+    print(args);
+    print(" is ");
+    print_ip(&address);
+    print("\n");
+}
+
 static void ping_command(const char *args) {
     struct ipv4_addr target;
     unsigned int received = 0;
@@ -128,9 +170,23 @@ static void ping_command(const char *args) {
         return;
     }
 
-    if (ipv4_parse(args, &target) != 0) {
-        print("usage: ping {ip}\n");
+    if (args[0] == 0) {
+        print("usage: ping {ip or name}\n");
         return;
+    }
+
+    if (ipv4_parse(args, &target) != 0) {
+        int result = net_resolve(args, &target, 1500);
+
+        if (result != NET_OK) {
+            print_resolve_error(result);
+            return;
+        }
+
+        print(args);
+        print(" is ");
+        print_ip(&target);
+        print("\n");
     }
 
     print("pinging ");
@@ -184,6 +240,8 @@ static void netinfo_command(void) {
     print_ip(net_ip());
     print("\ngateway: ");
     print_ip(net_gateway());
+    print("\ndns:     ");
+    print_ip(net_dns());
     print("\n");
 }
 
@@ -459,6 +517,10 @@ void execute_command(char *buffer) {
 
         ping_command(args);
 
+    } else if (strcmp(command, "resolve") == 0) {
+
+        resolve_command(args);
+
     } else if (strcmp(command, "netinfo") == 0) {
 
         netinfo_command();
@@ -508,7 +570,8 @@ void help() {
     print("df - shows disk usage\n");
     print("format yes - erases and formats the disk\n");
     print("exec {name} - runs a executable file\n");
-    print("ping {ip} - sends 4 echo requests\n");
+    print("ping {ip or name} - sends 4 echo requests\n");
+    print("resolve {name} - looks up an IPv4 address\n");
     print("netinfo - shows network configuration\n");
     print("panic - requests system panic");
 }
