@@ -16,6 +16,7 @@ iso/bin/test
 *.S
 *.sh
 *.bat
+factory
 
 # for other developers
 .vscode/
