@@ -15,45 +15,45 @@ $(BUILD)/kernel.bin:
 	nasm -f elf32 src/boot/interrupts.asm -o $(BUILD)/interrupts.o
 	nasm -f elf32 src/boot/gdt.asm -o $(BUILD)/gdt_asm.o
 	nasm -f elf32 src/kernel/usermode.asm -o $(BUILD)/usermode.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/kernel.c -o $(BUILD)/kernel.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -fno-strict-aliasing -Iinclude -nostdlib -fno-stack-protector -c src/kernel/fs.c -o $(BUILD)/fs.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/mem.c -o $(BUILD)/mem.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/mm.c -o $(BUILD)/mm.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/panic.c -o $(BUILD)/panic.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/vga.c -o $(BUILD)/vga.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/keyboard.c -o $(BUILD)/keyboard.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/speaker.c -o $(BUILD)/speaker.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/ata.c -o $(BUILD)/ata.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/pci.c -o $(BUILD)/pci.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/nvme.c -o $(BUILD)/nvme.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/disk.c -o $(BUILD)/disk.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/drivers/rtl8139.c -o $(BUILD)/rtl8139.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/net.c -o $(BUILD)/net.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/standart.c -o $(BUILD)/standart.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/boot/idt.c -o $(BUILD)/idt.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/boot/pic.c -o $(BUILD)/pic.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/boot/pit.c -o $(BUILD)/pit.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/boot/irq.c -o $(BUILD)/irq.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/scheduler.c -o $(BUILD)/scheduler.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/boot/gdt.c -o $(BUILD)/gdt.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/syscall.c -o $(BUILD)/syscall.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/lz4.c -o $(BUILD)/lz4.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/lz4hc.c -o $(BUILD)/lz4hc.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/sha256.c -o $(BUILD)/sha256.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/sha1.c -o $(BUILD)/sha1.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/base64.c -o $(BUILD)/base64.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c crypto/crc32.c -o $(BUILD)/crc32.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/addr.c -o $(BUILD)/addr.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/checksum.c -o $(BUILD)/checksum.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/ethernet.c -o $(BUILD)/ethernet.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/arp.c -o $(BUILD)/arp.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/ipv4.c -o $(BUILD)/ipv4.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/icmp.c -o $(BUILD)/icmp.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/udp.c -o $(BUILD)/udp.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/dns.c -o $(BUILD)/dns.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/recovery.c -o $(BUILD)/recovery.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/power.c -o $(BUILD)/power.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/installer.c -o $(BUILD)/installer.o
+	gcc $(CFLAGS) -c src/kernel/kernel.c -o $(BUILD)/kernel.o
+	gcc $(CFLAGS) -fno-strict-aliasing -c src/kernel/fs.c -o $(BUILD)/fs.o
+	gcc $(CFLAGS) -c src/kernel/mem.c -o $(BUILD)/mem.o
+	gcc $(CFLAGS) -c src/kernel/mm.c -o $(BUILD)/mm.o
+	gcc $(CFLAGS) -c src/kernel/panic.c -o $(BUILD)/panic.o
+	gcc $(CFLAGS) -c src/drivers/vga.c -o $(BUILD)/vga.o
+	gcc $(CFLAGS) -c src/drivers/keyboard.c -o $(BUILD)/keyboard.o
+	gcc $(CFLAGS) -c src/drivers/speaker.c -o $(BUILD)/speaker.o
+	gcc $(CFLAGS) -c src/drivers/ata.c -o $(BUILD)/ata.o
+	gcc $(CFLAGS) -c src/drivers/pci.c -o $(BUILD)/pci.o
+	gcc $(CFLAGS) -c src/drivers/nvme.c -o $(BUILD)/nvme.o
+	gcc $(CFLAGS) -c src/drivers/disk.c -o $(BUILD)/disk.o
+	gcc $(CFLAGS) -c src/drivers/rtl8139.c -o $(BUILD)/rtl8139.o
+	gcc $(CFLAGS) -c src/kernel/net.c -o $(BUILD)/net.o
+	gcc $(CFLAGS) -c src/kernel/standart.c -o $(BUILD)/standart.o
+	gcc $(CFLAGS) -c src/boot/idt.c -o $(BUILD)/idt.o
+	gcc $(CFLAGS) -c src/boot/pic.c -o $(BUILD)/pic.o
+	gcc $(CFLAGS) -c src/boot/pit.c -o $(BUILD)/pit.o
+	gcc $(CFLAGS) -c src/boot/irq.c -o $(BUILD)/irq.o
+	gcc $(CFLAGS) -c src/kernel/scheduler.c -o $(BUILD)/scheduler.o
+	gcc $(CFLAGS) -c src/boot/gdt.c -o $(BUILD)/gdt.o
+	gcc $(CFLAGS) -c src/kernel/syscall.c -o $(BUILD)/syscall.o
+	gcc $(CFLAGS) -c crypto/lz4.c -o $(BUILD)/lz4.o
+	gcc $(CFLAGS) -c crypto/lz4hc.c -o $(BUILD)/lz4hc.o
+	gcc $(CFLAGS) -c crypto/sha256.c -o $(BUILD)/sha256.o
+	gcc $(CFLAGS) -c crypto/sha1.c -o $(BUILD)/sha1.o
+	gcc $(CFLAGS) -c crypto/base64.c -o $(BUILD)/base64.o
+	gcc $(CFLAGS) -c crypto/crc32.c -o $(BUILD)/crc32.o
+	gcc $(CFLAGS) -c net/addr.c -o $(BUILD)/addr.o
+	gcc $(CFLAGS) -c net/checksum.c -o $(BUILD)/checksum.o
+	gcc $(CFLAGS) -c net/ethernet.c -o $(BUILD)/ethernet.o
+	gcc $(CFLAGS) -c net/arp.c -o $(BUILD)/arp.o
+	gcc $(CFLAGS) -c net/ipv4.c -o $(BUILD)/ipv4.o
+	gcc $(CFLAGS) -c net/icmp.c -o $(BUILD)/icmp.o
+	gcc $(CFLAGS) -c net/udp.c -o $(BUILD)/udp.o
+	gcc $(CFLAGS) -c net/dns.c -o $(BUILD)/dns.o
+	gcc $(CFLAGS) -c src/kernel/recovery.c -o $(BUILD)/recovery.o
+	gcc $(CFLAGS) -c src/kernel/power.c -o $(BUILD)/power.o
+	gcc $(CFLAGS) -c src/kernel/installer.c -o $(BUILD)/installer.o
 	{ \
 	echo '.section .rodata'; \
 	n=0; \
@@ -76,7 +76,7 @@ $(BUILD)/kernel.bin:
 	echo '.section .note.GNU-stack,"",@progbits'; \
 	} > $(BUILD)/bundle.S
 	gcc -m32 -c $(BUILD)/bundle.S -o $(BUILD)/bundle_data.o
-	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/bundle.c -o $(BUILD)/bundle.o
+	gcc $(CFLAGS) -c src/kernel/bundle.c -o $(BUILD)/bundle.o
 	ld -m elf_i386 -T linker.ld -o $(BUILD)/kernel.bin -nostdlib \
 	$(BUILD)/bundle.o $(BUILD)/bundle_data.o \
 	$(BUILD)/boot.o $(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o \
