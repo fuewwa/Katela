@@ -13,7 +13,7 @@ $(error GNU Make $(MIN_MAKE_VERSION) or newer is required, found $(MAKE_VERSION)
 endif
 
 ifneq ($(filter-out clean,$(GOALS)),)
-MISSING_TOOLS := $(call find_missing,nasm gcc g++ ld)
+MISSING_TOOLS := $(call find_missing,nasm gcc ld python3)
 endif
 
 ifneq ($(filter all iso run run-nvme,$(GOALS)),)

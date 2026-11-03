@@ -51,9 +51,9 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/icmp.c -o $(BUILD)/icmp.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/udp.c -o $(BUILD)/udp.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/dns.c -o $(BUILD)/dns.o
-	$(CXX) $(CXXFLAGS) -c src/kernel/recovery.cpp -o $(BUILD)/recovery.o
-	$(CXX) $(CXXFLAGS) -c src/kernel/power.cpp -o $(BUILD)/power.o
-	$(CXX) $(CXXFLAGS) -c src/kernel/installer.cpp -o $(BUILD)/installer.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/recovery.c -o $(BUILD)/recovery.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/power.c -o $(BUILD)/power.o
+	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c src/kernel/installer.c -o $(BUILD)/installer.o
 	{ \
 	echo '.section .rodata'; \
 	n=0; \
@@ -90,14 +90,10 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o $(BUILD)/dns.o \
 	$(BUILD)/recovery.o $(BUILD)/power.o $(BUILD)/installer.o
 
-$(BUILD)/mkfactory: tools/mkfactory.cpp include/layout.h
-	mkdir -p $(BUILD)
-	$(CXX) $(HOST_CXXFLAGS) tools/mkfactory.cpp -o $(BUILD)/mkfactory
-
-$(FACTORY): $(BUILD)/kernel.bin $(BUILD)/mkfactory
-	$(BUILD)/mkfactory config $(BUILD)/embedded.cfg $(BUILD)/disk.cfg
+$(FACTORY): $(BUILD)/kernel.bin tools/mkfactory.py include/layout.h
+	python3 tools/mkfactory.py config include/layout.h $(BUILD)/embedded.cfg $(BUILD)/disk.cfg
 	$(GRUB_MKIMAGE) -O i386-pc -p '(hd0)' -c $(BUILD)/embedded.cfg -o $(BUILD)/core.img $(GRUB_MODULES)
-	$(BUILD)/mkfactory image $(GRUB_BOOT_IMG) $(BUILD)/core.img $(BUILD)/kernel.bin $(BUILD)/disk.cfg $(FACTORY)
+	python3 tools/mkfactory.py image include/layout.h $(GRUB_BOOT_IMG) $(BUILD)/core.img $(BUILD)/kernel.bin $(BUILD)/disk.cfg $(FACTORY)
 
 iso: $(BUILD)/kernel.bin $(FACTORY)
 	mkdir -p $(ISO)/boot
