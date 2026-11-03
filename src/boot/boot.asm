@@ -11,12 +11,20 @@ align 16
 stack:
 resb 16384
 
+global multiboot_magic
+global multiboot_info
+multiboot_magic: resd 1
+multiboot_info: resd 1
+
 section .text
 global _start
 extern kernel_main
 
 _start:
     cli
+
+    mov [multiboot_magic], eax
+    mov [multiboot_info], ebx
 
     mov esp, stack + 16384
 

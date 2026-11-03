@@ -9,6 +9,7 @@
 #include "../../include/scheduler.h"
 #include "../../include/bundle.h"
 #include "../../include/net.h"
+#include "../../include/recovery.h"
 
 #define SWISS_START_SIZE 1024
 #define SWISS_MAX_SIZE (512 * 1024)
@@ -93,6 +94,10 @@ void swiss() {
 
 // main function
 void kernel_main() {
+    if (recovery_requested()) {
+        recovery_main();
+    }
+
     init();
     int mount = fs_init();
 

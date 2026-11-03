@@ -1,7 +1,8 @@
 #ifndef FS_H
 #define FS_H
 
-#define FS_LBA_START 100
+#include "layout.h"
+#define FS_LBA_START FACTORY_SECTORS
 #define FS_NAME_MAX 115
 #define FS_READ_ALL_MAX (1024u * 1024u)
 

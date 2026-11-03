@@ -1,0 +1,10 @@
+#ifndef LAYOUT_H
+#define LAYOUT_H
+
+#define FACTORY_SECTORS 4096
+#define BOOT_CFG_LBA 400
+#define BOOT_CFG_SECTORS 4
+#define KERNEL_LBA 512
+#define KERNEL_SECTORS 3584
+
+#endif

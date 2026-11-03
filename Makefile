@@ -51,6 +51,9 @@ $(BUILD)/kernel.bin:
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/icmp.c -o $(BUILD)/icmp.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/udp.c -o $(BUILD)/udp.o
 	gcc -m32 -ffreestanding -mno-sse -mno-mmx -Iinclude -nostdlib -fno-stack-protector -c net/dns.c -o $(BUILD)/dns.o
+	$(CXX) $(CXXFLAGS) -c src/kernel/recovery.cpp -o $(BUILD)/recovery.o
+	$(CXX) $(CXXFLAGS) -c src/kernel/power.cpp -o $(BUILD)/power.o
+	$(CXX) $(CXXFLAGS) -c src/kernel/installer.cpp -o $(BUILD)/installer.o
 	{ \
 	echo '.section .rodata'; \
 	n=0; \
@@ -84,11 +87,22 @@ $(BUILD)/kernel.bin:
 	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
 	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o $(BUILD)/base64.o $(BUILD)/crc32.o \
 	$(BUILD)/addr.o $(BUILD)/checksum.o $(BUILD)/ethernet.o \
-	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o $(BUILD)/dns.o
+	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o $(BUILD)/dns.o \
+	$(BUILD)/recovery.o $(BUILD)/power.o $(BUILD)/installer.o
 
-iso: $(BUILD)/kernel.bin
+$(BUILD)/mkfactory: tools/mkfactory.cpp include/layout.h
+	mkdir -p $(BUILD)
+	$(CXX) $(HOST_CXXFLAGS) tools/mkfactory.cpp -o $(BUILD)/mkfactory
+
+$(FACTORY): $(BUILD)/kernel.bin $(BUILD)/mkfactory
+	$(BUILD)/mkfactory config $(BUILD)/embedded.cfg $(BUILD)/disk.cfg
+	$(GRUB_MKIMAGE) -O i386-pc -p '(hd0)' -c $(BUILD)/embedded.cfg -o $(BUILD)/core.img $(GRUB_MODULES)
+	$(BUILD)/mkfactory image $(GRUB_BOOT_IMG) $(BUILD)/core.img $(BUILD)/kernel.bin $(BUILD)/disk.cfg $(FACTORY)
+
+iso: $(BUILD)/kernel.bin $(FACTORY)
 	mkdir -p $(ISO)/boot
 	cp $(BUILD)/kernel.bin $(ISO)/boot/
+	cp $(FACTORY) $(ISO)/boot/factory.img
 	$(GRUB_MKRESCUE) -o katela.iso $(ISO)
 
 disk.img:
@@ -101,7 +115,7 @@ run-nvme: iso disk.img
 	qemu-system-i386 -cdrom katela.iso -drive file=disk.img,if=none,id=nvm,format=raw -device nvme,serial=katela,drive=nvm -netdev user,id=net0 -device rtl8139,netdev=net0 -machine pcspk-audiodev=snd -audiodev alsa,id=snd
 
 clean:
-	rm -rf build katela.iso disk.img
+	rm -rf build katela.iso disk.img $(ISO)/boot/factory.img
 
 .PHONY: all iso run run-nvme clean
 # Add Makefile's command names here
