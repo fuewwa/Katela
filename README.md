@@ -21,6 +21,8 @@ In principle, I allow the use of AI for development, but with some very importan
 - I allow the use of AI in Markdown files, but please verify that the information in the file is accurate
 - Check that the code (written by AI) works properly and that there are no bugs that could lead to security issues
 
+Maintainers can also use AI without following some of these rules, but the responsibility still lies with them.
+
 ## Requirements
 
 To build and run Katela you need a cross-platform toolchain consisting of an assembler (NASM), a GCC-based cross/multilib compiler, GRUB tools for producing a bootable ISO, `xorriso` for ISO creation, and QEMU for emulation/testing (you also can try another VMs like virtualbox or wmware).
