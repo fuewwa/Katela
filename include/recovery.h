@@ -17,6 +17,7 @@ void recovery_power_off(void);
 
 int recovery_image_present(void);
 int recovery_install(void (*progress)(unsigned int done, unsigned int total));
+int recovery_erase_fs(void);
 const char *recovery_install_text(int result);
 
 #endif

@@ -24,8 +24,9 @@
 
 #define ACTION_REBOOT 0
 #define ACTION_FACTORY 1
-#define ACTION_POWER_OFF 2
-#define ACTION_COUNT 3
+#define ACTION_ERASE 2
+#define ACTION_POWER_OFF 3
+#define ACTION_COUNT 4
 
 extern unsigned int multiboot_magic;
 extern unsigned int multiboot_info;
@@ -41,6 +42,7 @@ struct info {
 static const char *const items[ACTION_COUNT] = {
 	"Reboot system now",
 	"Reboot bootloader to factory conf",
+	"Erase Katela filesystem",
 	"Power off"
 };
 
@@ -190,6 +192,29 @@ static void factory_screen(void) {
 	wait_key();
 }
 
+static void erase_screen(void) {
+	int row = MENU_ROW + ACTION_COUNT + 1;
+
+	draw_menu(ACTION_ERASE);
+	put_text(3, row, "This destroys all files on the Katela filesystem.", ATTR_WARNING);
+	put_text(3, row + 1, "The disk is formatted again on the next boot.", ATTR_WARNING);
+	put_text(3, row + 2, "Press Y to continue, any other key to cancel.", ATTR_NORMAL);
+
+	if (wait_key() != KEY_YES) {
+		return;
+	}
+
+	int result = recovery_erase_fs();
+
+	if (result == INSTALL_OK) {
+		put_text(3, row + 4, "Filesystem erased.", ATTR_OK);
+	} else {
+		put_text(3, row + 4, recovery_install_text(result), ATTR_ERROR);
+	}
+	put_text(3, row + 5, "Press any key to return.", ATTR_NORMAL);
+	wait_key();
+}
+
 static int has_word(const char *text, const char *word) {
 	int i = 0;
 
@@ -251,6 +276,9 @@ void recovery_main(void) {
 				recovery_reboot();
 			} else if (selected == ACTION_POWER_OFF) {
 				recovery_power_off();
+			} else if (selected == ACTION_ERASE) {
+				erase_screen();
+				draw_menu(selected);
 			} else {
 				factory_screen();
 				draw_menu(selected);

@@ -1,5 +1,6 @@
 #include "../../include/recovery.h"
 #include "../../include/layout.h"
+#include "../../include/fs.h"
 #include "../drivers/ata.h"
 
 #define SECTOR 512
@@ -110,6 +111,42 @@ int recovery_install(void (*progress)(unsigned int done, unsigned int total)) {
 			if (progress) {
 				progress(done, total);
 			}
+		}
+	}
+
+	return INSTALL_OK;
+}
+
+int recovery_erase_fs(void) {
+	unsigned int disk_sectors = ata_total_sectors();
+
+	if (disk_sectors == 0) {
+		return INSTALL_NO_DISK;
+	}
+	if (disk_sectors <= FS_LBA_START) {
+		return INSTALL_DISK_TOO_SMALL;
+	}
+
+	unsigned char buffer[SECTOR];
+
+	for (unsigned int i = 0; i < SECTOR; i++) {
+		buffer[i] = 0;
+	}
+
+	if (ata_write_sectors(FS_LBA_START, 1, buffer) != 0) {
+		return INSTALL_WRITE_FAILED;
+	}
+
+	for (unsigned int i = 0; i < SECTOR; i++) {
+		buffer[i] = 0xFF;
+	}
+
+	if (ata_read_sector(FS_LBA_START, buffer) != 0) {
+		return INSTALL_VERIFY_FAILED;
+	}
+	for (unsigned int i = 0; i < SECTOR; i++) {
+		if (buffer[i] != 0) {
+			return INSTALL_VERIFY_FAILED;
 		}
 	}
 
