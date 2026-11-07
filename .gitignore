@@ -19,6 +19,7 @@ iso/bin/test
 
 # for other developers
 .vscode/
+.claude/
 *.patch
 *.diff
 *.log
