@@ -1,7 +1,7 @@
 #include "../../include/recovery.h"
 #include "../../include/layout.h"
 #include "../../include/fs.h"
-#include "../drivers/ata.h"
+#include "../drivers/disk.h"
 
 #define SECTOR 512
 #define CHUNK_SECTORS 64
@@ -70,7 +70,7 @@ int recovery_install(void (*progress)(unsigned int done, unsigned int total)) {
 		return INSTALL_BAD_IMAGE;
 	}
 
-	unsigned int disk_sectors = ata_total_sectors();
+	unsigned int disk_sectors = disk_total_sectors();
 
 	if (disk_sectors == 0) {
 		return INSTALL_NO_DISK;
@@ -83,7 +83,7 @@ int recovery_install(void (*progress)(unsigned int done, unsigned int total)) {
 	unsigned int done = 0;
 
 	for (unsigned int lba = 0; lba < FACTORY_SECTORS; lba += CHUNK_SECTORS) {
-		if (ata_write_sectors(lba, CHUNK_SECTORS, image + lba * SECTOR) != 0) {
+		if (disk_write_sectors(lba, CHUNK_SECTORS, image + lba * SECTOR) != 0) {
 			return INSTALL_WRITE_FAILED;
 		}
 		done += CHUNK_SECTORS;
@@ -95,7 +95,7 @@ int recovery_install(void (*progress)(unsigned int done, unsigned int total)) {
 	unsigned char buffer[SECTOR];
 
 	for (unsigned int lba = 0; lba < FACTORY_SECTORS; lba++) {
-		if (ata_read_sector(lba, buffer) != 0) {
+		if (disk_read_sector(lba, buffer) != 0) {
 			return INSTALL_VERIFY_FAILED;
 		}
 
@@ -118,7 +118,7 @@ int recovery_install(void (*progress)(unsigned int done, unsigned int total)) {
 }
 
 int recovery_erase_fs(void) {
-	unsigned int disk_sectors = ata_total_sectors();
+	unsigned int disk_sectors = disk_total_sectors();
 
 	if (disk_sectors == 0) {
 		return INSTALL_NO_DISK;
@@ -133,7 +133,7 @@ int recovery_erase_fs(void) {
 		buffer[i] = 0;
 	}
 
-	if (ata_write_sectors(FS_LBA_START, 1, buffer) != 0) {
+	if (disk_write_sectors(FS_LBA_START, 1, buffer) != 0) {
 		return INSTALL_WRITE_FAILED;
 	}
 
@@ -141,7 +141,7 @@ int recovery_erase_fs(void) {
 		buffer[i] = 0xFF;
 	}
 
-	if (ata_read_sector(FS_LBA_START, buffer) != 0) {
+	if (disk_read_sector(FS_LBA_START, buffer) != 0) {
 		return INSTALL_VERIFY_FAILED;
 	}
 	for (unsigned int i = 0; i < SECTOR; i++) {
@@ -158,7 +158,7 @@ const char *recovery_install_text(int result) {
 		case INSTALL_OK: return "Factory configuration installed and verified.";
 		case INSTALL_NO_IMAGE: return "Factory image was not loaded by the bootloader.";
 		case INSTALL_BAD_IMAGE: return "Factory image is damaged.";
-		case INSTALL_NO_DISK: return "No ATA disk found.";
+		case INSTALL_NO_DISK: return "No disk found.";
 		case INSTALL_DISK_TOO_SMALL: return "Disk is too small.";
 		case INSTALL_WRITE_FAILED: return "Disk write failed.";
 		case INSTALL_VERIFY_FAILED: return "Verification failed.";
