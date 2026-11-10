@@ -1,21 +1,26 @@
-## Selecting an ISO
+# Installation guide
 
-First, you need to decide exactly what you're going to use and install, there are several options:
+This document is a guide for installing Katela from scratch using the “recovery” mode built into the Katela boot image
 
-* Distribution - This distribution was created by other developers; choose only verified distributions. The distributors bear full responsibility (if this error occurs only in their distribution).
+Before installing, we recommend reviewing the Frequently Asked Questions (FAQ) and the “Discussions” section on GitHub, as there may occasionally be security vulnerabilities or issues with kernel functionality.
 
-* Katela From Scratch - It's not recommended for everyday use, since you'll end up with just a base on which distributions will be built later, but you can do it if you want to.
+This guide is written in a concise style, and we recommend following the instructions in the order presented, section by section.
 
-Once you've chosen the method that works best for you, go to the website or GitHub page and download the latest version, or build it yourself. If the distribution isn't open source, we don't recommend downloading it.
+## Pre-installation
 
-Once you've found the ISO file you need, you'll need a USB flash drive and an ISO extraction program. Insert the USB flash drive into your computer, open the ISO file in an ISO extraction program, and then start the download.
+To install the Katela, you will need:
 
-> [!WARNING]
-> The download process varies for each extractor, so to keep this page from getting too long, please refer to the wiki for the extractor you've chosen.
+* USB Flash drive.
+* Distribution's ISO.
+* ISO Extractor (Rufus, BalenaEtcher, e.t.c).
 
-## Boot
-
-The system boots using the 16-bit bootloader (GRUB), after which the kernel switches to 32-bit mode and begins initialization: the file system, GDT, Task Scheduler, audio, and so on. The system then mounts the disk and only then loads into the shell.
+Once you've made sure you have everything listed above, insert the USB drive into your computer. Open Extractor, select the USB drive and the ISO file you need, and start the installation process on the USB drive.
 
 > [!IMPORTANT]
-> Once again, I'll say it: things may vary from one distribution to another, so here I'm talking specifically about Kernel itself
+> Installing the software on a USB flash drive requires formatting the drive. If you install it on a USB flash drive, your hard drives will not be affected, and your current operating system will remain untouched.
+
+After installing it on the USB drive, restart your PC and enter the Boot menu, there, select your USB drive, and the Katela bootloader menu should appear.
+
+## Installation
+
+Enter Recovery mode. Once you're there, you'll see a list of options. For now, you only need “Reboot bootloader to factory config”; select it and press Enter. Accept the warnings (but be sure to read them). After the installation, reboot, and now: congratulations, you're a Katela user!
