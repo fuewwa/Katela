@@ -2,7 +2,7 @@
 #define STANDART_H
 
 #define DISTRO  "Katela Kernel"
-#define VERSION "1.3"
+#define VERSION "Stable"
 
 /*
  * hi :3
