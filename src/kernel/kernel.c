@@ -1,4 +1,4 @@
-#include "../drivers/vga.h"
+#include "../drivers/console.h"
 #include "../drivers/keyboard.h"
 #include "../../include/standart.h"
 #include "../../include/fs.h"
@@ -94,6 +94,8 @@ void swiss() {
 
 // main function
 void kernel_main() {
+    console_init();
+
     if (recovery_requested()) {
         recovery_main();
     }

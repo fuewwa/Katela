@@ -1,6 +1,6 @@
 #include "../../include/bundle.h"
 #include "../../include/fs.h"
-#include "../drivers/vga.h"
+#include "../drivers/console.h"
 
 extern const struct bundle_entry bundle_table[];
 

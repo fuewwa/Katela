@@ -1,7 +1,7 @@
 #include "../../include/mm.h"
 #include "../../include/panic.h"
 #include "../../include/mem.h"
-#include "../drivers/vga.h"
+#include "../drivers/console.h"
 
 #define HEAP_SIZE (4 * 1024 * 1024)
 

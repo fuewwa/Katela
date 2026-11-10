@@ -21,6 +21,9 @@ $(BUILD)/kernel.bin:
 	gcc $(CFLAGS) -c src/kernel/mm.c -o $(BUILD)/mm.o
 	gcc $(CFLAGS) -c src/kernel/panic.c -o $(BUILD)/panic.o
 	gcc $(CFLAGS) -c src/drivers/vga.c -o $(BUILD)/vga.o
+	gcc $(CFLAGS) -c src/drivers/framebuffer.c -o $(BUILD)/framebuffer.o
+	gcc $(CFLAGS) -c src/drivers/font.c -o $(BUILD)/font.o
+	gcc $(CFLAGS) -c src/drivers/console.c -o $(BUILD)/console.o
 	gcc $(CFLAGS) -c src/drivers/keyboard.c -o $(BUILD)/keyboard.o
 	gcc $(CFLAGS) -c src/drivers/speaker.c -o $(BUILD)/speaker.o
 	gcc $(CFLAGS) -c src/drivers/ata.c -o $(BUILD)/ata.o
@@ -80,7 +83,7 @@ $(BUILD)/kernel.bin:
 	ld -m elf_i386 -T linker.ld -o $(BUILD)/kernel.bin -nostdlib \
 	$(BUILD)/bundle.o $(BUILD)/bundle_data.o \
 	$(BUILD)/boot.o $(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o \
-	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
+	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/framebuffer.o $(BUILD)/font.o $(BUILD)/console.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
 	$(BUILD)/idt.o $(BUILD)/scheduler.o $(BUILD)/interrupts.o $(BUILD)/ata.o \
 	$(BUILD)/gdt.o $(BUILD)/syscall.o $(BUILD)/usermode.o $(BUILD)/mem.o $(BUILD)/irq.o \
 	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o $(BUILD)/rtl8139.o $(BUILD)/net.o \

@@ -1,5 +1,5 @@
 #include "../../include/standart.h"
-#include "../drivers/vga.h"
+#include "../drivers/console.h"
 #include "../drivers/speaker.h"
 #include "../drivers/disk.h"
 #include "../../include/fs.h"

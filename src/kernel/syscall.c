@@ -2,7 +2,7 @@
 #include "../../include/panic.h"
 #include "../../include/standart.h"
 #include "../../include/scheduler.h"
-#include "../drivers/vga.h"
+#include "../drivers/console.h"
 #include "../drivers/keyboard.h"
 
 static int is_exec(const char *line) {

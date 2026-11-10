@@ -64,6 +64,7 @@
   <section id="inside" class="block">
     <h2>What's inside</h2>
     <ul class="rows">
+      <li><h3>Framebuffer console</h3><p>The console draws text on a 1024x768 framebuffer set up by GRUB. If GRUB cannot provide one, Katela falls back to VGA text mode.</p></li>
       <li><h3>User mode</h3><p>Programs run in ring 3, separated from the kernel.</p></li>
       <li><h3>A real filesystem</h3><p>Early builds kept everything in memory with a limit of 16 files. Now storage is limited only by the size of your drive.</p></li>
       <li><h3>NVMe driver</h3><p>Support for modern drives, added in release 1.5nvme.</p></li>

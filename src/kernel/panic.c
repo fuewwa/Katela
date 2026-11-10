@@ -1,5 +1,5 @@
 #include "../../include/panic.h"
-#include "../drivers/vga.h"
+#include "../drivers/console.h"
 
 void panic(const char *message)
 {

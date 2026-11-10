@@ -1,8 +1,17 @@
 section .multiboot
 align 4
 dd 0x1BADB002
-dd 0x0
-dd -(0x1BADB002)
+dd 0x4
+dd -(0x1BADB002 + 0x4)
+dd 0
+dd 0
+dd 0
+dd 0
+dd 0
+dd 0
+dd 1024
+dd 768
+dd 32
 
 section .note.GNU-stack noalloc noexec nowrite progbits
 

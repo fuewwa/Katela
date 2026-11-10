@@ -46,7 +46,7 @@ Things that are easy to trip over:
 
 - The Makefile does not track dependencies. After you change a source file, run `make clean` before `make`, otherwise the old `build/kernel.bin` is reused.
 - `make clean` also deletes `disk.img`, so every clean build starts on a blank disk. To test mounting a disk that was formatted earlier, copy `disk.img` aside before cleaning and boot it with `qemu-system-i386 -cdrom katela.iso -hda saved.img`.
-- GRUB shows a menu when the image boots. Choose `Kernel`.
+- GRUB shows a menu when the image boots. Choose `Kernel`. The console then runs on a 1024x768 framebuffer. The window size of QEMU shows which console is active: 1024x768 is the framebuffer, 720x400 is the VGA text fallback.
 - The run targets use the ALSA audio backend for the PC speaker (the `beep` command). If the machine has no sound card, QEMU prints ALSA warnings but still runs. To use another backend, change the `-audiodev` option in the Makefile.
 
 Headers of `crypto/` and `net/` live next to their sources, not in `include/`.
@@ -78,6 +78,17 @@ The kernel is freestanding C. A few rules follow from that, and each of them has
 - **Hardware structures and DMA buffers** need `packed` and `aligned` attributes, see `docs/process/PROGRAMMING_LANGUAGE.md`.
 
 Match the indentation of the file you are editing, follow `.editorconfig` in new files, and do not reformat lines you did not change.
+
+## Console
+
+The kernel asks GRUB for a 1024x768 32-bit linear framebuffer through the Multiboot header in `src/boot/boot.asm`. `console_init()` reads the framebuffer description from the Multiboot information. If GRUB did not set up a usable framebuffer, the console stays in VGA text mode. Both modes are used through `src/drivers/console.h`:
+
+- `print`, `backspace` and `clear` for normal output
+- `console_cols`, `console_rows`, `console_put` and `console_hide_cursor` for code that places characters itself, like recovery mode
+
+Do not write to `0xB8000` or to the framebuffer outside of `src/drivers/vga.c` and `src/drivers/framebuffer.c`. The framebuffer driver keeps a copy of every character cell and draws 8x16 glyphs from `src/drivers/font.c`. Only printable ASCII is drawn, anything else is drawn as `?`. To regenerate the font run `python3 tools/mkfont.py unscii-16.hex src/drivers/font.c`.
+
+The video modules of GRUB (`all_video`) are needed for the mode switch. They are listed in `GRUB_MODULES` in `config/config.mk`, for the factory image, and loaded by `insmod` in `iso/boot/grub/grub.cfg`, for the ISO.
 
 ## Debugging with QEMU
 
@@ -116,6 +127,7 @@ There are no automated tests yet. The CI workflow only checks that the project b
 
 - `make clean` and `make`, then boot it with `make run`
 - if you touched the disk, the filesystem, PCI or interrupts, also boot with `make run-nvme`
+- if you touched the console, boot once with the framebuffer and once in the VGA text fallback (a kernel built without the video request in `src/boot/boot.asm`), and open the recovery menu in both
 - for disk and filesystem changes, boot twice: once on a blank disk and once more on the disk that the first boot formatted
 - check the compiler output for new warnings
 - state in the pull request what you tested and how

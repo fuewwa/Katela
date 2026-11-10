@@ -1,12 +1,13 @@
 #include "../../include/recovery.h"
 #include "../../include/io.h"
+#include "../drivers/console.h"
 
 #define MULTIBOOT_MAGIC 0x2BADB002
 #define INFO_FLAG_CMDLINE (1u << 2)
 
-#define WIDTH 80
-#define HEIGHT 25
 #define MENU_ROW 3
+#define WIDTH console_cols()
+#define HEIGHT console_rows()
 
 #define ATTR_NORMAL 0x07
 #define ATTR_SELECTED 0x70
@@ -46,22 +47,17 @@ static const char *const items[ACTION_COUNT] = {
 	"Power off"
 };
 
-static volatile unsigned short *const video = (volatile unsigned short *)0xB8000;
 static int progress_row;
-
-static void put_cell(int x, int y, char c, unsigned char attr) {
-	video[y * WIDTH + x] = (unsigned short)((attr << 8) | (unsigned char)c);
-}
 
 static void fill_row(int y, unsigned char attr) {
 	for (int x = 0; x < WIDTH; x++) {
-		put_cell(x, y, ' ', attr);
+		console_put(x, y, ' ', attr);
 	}
 }
 
 static void put_text(int x, int y, const char *text, unsigned char attr) {
 	for (int i = 0; text[i] != '\0' && x + i < WIDTH; i++) {
-		put_cell(x + i, y, text[i], attr);
+		console_put(x + i, y, text[i], attr);
 	}
 }
 
@@ -69,11 +65,6 @@ static void clear_screen(void) {
 	for (int y = 0; y < HEIGHT; y++) {
 		fill_row(y, ATTR_NORMAL);
 	}
-}
-
-static void hide_cursor(void) {
-	outb(0x3D4, 0x0A);
-	outb(0x3D5, 0x20);
 }
 
 static int number_text(unsigned int value, char *out) {
@@ -136,7 +127,7 @@ static void draw_menu(int selected) {
 		unsigned char attr = (i == selected) ? ATTR_SELECTED : ATTR_NORMAL;
 
 		for (int x = 2; x < WIDTH - 2; x++) {
-			put_cell(x, MENU_ROW + i, ' ', attr);
+			console_put(x, MENU_ROW + i, ' ', attr);
 		}
 		put_text(3, MENU_ROW + i, items[i], attr);
 	}
@@ -152,7 +143,7 @@ static void draw_progress(unsigned int done, unsigned int total) {
 	char text[16];
 
 	for (int i = 0; i < bar_width; i++) {
-		put_cell(bar_x + i, progress_row, i < filled ? '#' : '.', ATTR_NORMAL);
+		console_put(bar_x + i, progress_row, i < filled ? '#' : '.', ATTR_NORMAL);
 	}
 
 	int length = number_text(percent, text);
@@ -259,7 +250,7 @@ void recovery_main(void) {
 	int selected = 0;
 
 	asm volatile("cli");
-	hide_cursor();
+	console_hide_cursor();
 	draw_menu(selected);
 
 	while (1) {
