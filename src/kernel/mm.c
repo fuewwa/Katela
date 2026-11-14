@@ -30,6 +30,8 @@ void *kmalloc(unsigned int size)
     if (size == 0)
         return 0;
 
+    size = (size + 7) & ~7u;
+
     if (!first_block)
         mm_init();
 

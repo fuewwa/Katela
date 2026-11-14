@@ -166,7 +166,7 @@ static void put_char(char c) {
 }
 
 int framebuffer_init(unsigned int info_address) {
-    const struct info *info = (const struct info *)info_address;
+    const struct info *info = (const struct info *)(unsigned long)info_address;
 
     if (info_address == 0 || !(info->flags & INFO_FLAG_FRAMEBUFFER) || info->type != TYPE_RGB) {
         return 0;
@@ -186,7 +186,7 @@ int framebuffer_init(unsigned int info_address) {
         return 0;
     }
 
-    base = (volatile unsigned char *)info->address_low;
+    base = (volatile unsigned char *)(unsigned long)info->address_low;
     pitch = info->pitch;
     width = info->width;
     height = info->height;

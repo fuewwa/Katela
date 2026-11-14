@@ -1,9 +1,15 @@
 # Programming Language
 
-Katela is written in the C programming language [1] and x86 assembly. More precisely, the C code is compiled with `gcc` [2] for 32-bit x86 in freestanding mode:
+Katela is written in the C programming language [1] and assembly for x86 and x86_64. More precisely, the C code is compiled with `gcc` [2] in freestanding mode, for 32-bit x86:
 
 ```
-gcc -m32 -ffreestanding -nostdlib -fno-stack-protector -Iinclude -c file.c
+gcc -m32 -ffreestanding -nostdlib -fno-stack-protector -Iinclude -Iarch/x86 -c file.c
+```
+
+or for x86_64:
+
+```
+gcc -m64 -mno-red-zone -fno-pic -fno-pie -ffreestanding -nostdlib -fno-stack-protector -Iinclude -Iarch/x86_64 -Iarch/x86 -c file.c
 ```
 
 There is no hosted environment. Katela does not link against any standard library, so the kernel provides everything it needs itself, and the compiler is told not to assume otherwise.
@@ -48,11 +54,11 @@ Write the full `__attribute__((...))` form.
 
 ## Inline assembly
 
-Katela uses GCC extended inline assembly in AT&T syntax. Every statement in the tree is written as `asm volatile`. The main uses are:
+Katela uses GCC extended inline assembly in AT&T syntax. Every statement in the tree is written as `asm volatile`, and the statements that depend on the processor mode live in `arch/`. The main uses are:
 
 - port I/O: `inb`, `inw`, `inl`, `outb`, `outw`, `outl`
 - interrupt control and halting: `cli`, `sti`, `hlt`
-- saving and restoring the flags register around critical sections
+- saving and restoring the flags register around critical sections (`pushfl` and `popfl` on x86, `pushfq` and `popfq` on x86_64)
 - loading CPU tables: `lidt`
 - software interrupts: `int $0x80` for syscalls and `int $0x81`, which the scheduler uses
 
@@ -71,11 +77,19 @@ Use inline assembly for short sequences that C cannot express. Katela's inline a
 
 ## Assembly files
 
-Assembly source is written for NASM [6] and assembled as 32-bit ELF:
+Assembly source is written for NASM [6]. The x86 files are assembled as 32-bit ELF:
 
 ```
 nasm -f elf32 file.asm -o file.o
 ```
+
+and the x86_64 files as 64-bit ELF:
+
+```
+nasm -f elf64 file.asm -o file.o
+```
+
+The x86_64 boot code is the exception inside the 64-bit files: GRUB starts the kernel in 32-bit protected mode, so the first part of `arch/x86_64/boot.asm` is written with `bits 32`. It builds the page tables, enters long mode, and continues with `bits 64`. The x86_64 kernel is linked as a 64-bit ELF file and then converted with `objcopy -O elf32-i386`, because the Multiboot loader of GRUB only reads 32-bit ELF files.
 
 NASM uses Intel syntax. Inline assembly in C files uses AT&T syntax, because that is what GCC expects. Keep the two apart. Do not mix syntaxes inside one file.
 

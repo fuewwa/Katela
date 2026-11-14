@@ -1,5 +1,4 @@
-#include "irq.h"
-#include "pic.h"
+#include "../../include/irq.h"
 
 struct irq_slot {
 	void (*handler)(void *context);
@@ -8,36 +7,23 @@ struct irq_slot {
 
 static struct irq_slot slots[IRQ_COUNT][IRQ_HANDLERS_MAX];
 
-static inline unsigned int save_flags(void)
-{
-	unsigned int flags;
-
-	asm volatile("pushfl; popl %0; cli" : "=r"(flags) : : "memory");
-	return flags;
-}
-
-static inline void restore_flags(unsigned int flags)
-{
-	asm volatile("pushl %0; popfl" : : "r"(flags) : "memory", "cc");
-}
-
 int irq_register(unsigned int irq, void (*handler)(void *context), void *context)
 {
 	unsigned int flags;
 	unsigned int i;
 	int free_index = -1;
 
-	if (irq == 0 || irq == 2 || irq >= IRQ_COUNT || handler == 0) {
+	if (!irq_valid(irq) || handler == 0) {
 		return -1;
 	}
 
-	flags = save_flags();
+	flags = irq_save();
 
 	for (i = 0; i < IRQ_HANDLERS_MAX; i++) {
 		struct irq_slot *slot = &slots[irq][i];
 
 		if (slot->handler == handler && slot->context == context) {
-			restore_flags(flags);
+			irq_restore(flags);
 			return -1;
 		}
 
@@ -47,15 +33,15 @@ int irq_register(unsigned int irq, void (*handler)(void *context), void *context
 	}
 
 	if (free_index < 0) {
-		restore_flags(flags);
+		irq_restore(flags);
 		return -1;
 	}
 
 	slots[irq][free_index].handler = handler;
 	slots[irq][free_index].context = context;
-	pic_unmask(irq);
+	irq_unmask(irq);
 
-	restore_flags(flags);
+	irq_restore(flags);
 	return 0;
 }
 
@@ -65,11 +51,11 @@ void irq_unregister(unsigned int irq, void (*handler)(void *context), void *cont
 	unsigned int i;
 	int remaining = 0;
 
-	if (irq == 0 || irq == 2 || irq >= IRQ_COUNT) {
+	if (!irq_valid(irq)) {
 		return;
 	}
 
-	flags = save_flags();
+	flags = irq_save();
 
 	for (i = 0; i < IRQ_HANDLERS_MAX; i++) {
 		struct irq_slot *slot = &slots[irq][i];
@@ -85,10 +71,10 @@ void irq_unregister(unsigned int irq, void (*handler)(void *context), void *cont
 	}
 
 	if (!remaining) {
-		pic_mask(irq);
+		irq_mask(irq);
 	}
 
-	restore_flags(flags);
+	irq_restore(flags);
 }
 
 void irq_dispatch(unsigned int irq)
@@ -99,7 +85,7 @@ void irq_dispatch(unsigned int irq)
 		return;
 	}
 
-	if (pic_spurious(irq)) {
+	if (irq_spurious(irq)) {
 		return;
 	}
 
@@ -111,5 +97,5 @@ void irq_dispatch(unsigned int irq)
 		}
 	}
 
-	pic_eoi(irq);
+	irq_eoi(irq);
 }

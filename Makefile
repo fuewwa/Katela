@@ -1,3 +1,5 @@
+ARCH ?= x86_64
+
 include config/requirements.mk
 # If you are adding a new dependency
 # Make sure to add its existence check to the MISSING_TOOLS block in Makefile
@@ -7,56 +9,46 @@ include config/config.mk
 # Whole variables (if not requirements)
 # Paste and create into config.mk
 
-all: iso
+include arch/$(ARCH)/arch.mk
 
-$(BUILD)/kernel.bin:
+.DEFAULT_GOAL := all
+
+all: $(ALL)
+
+$(KERNEL):
 	mkdir -p $(BUILD)
-	nasm -f elf32 src/boot/boot.asm -o $(BUILD)/boot.o
-	nasm -f elf32 src/boot/interrupts.asm -o $(BUILD)/interrupts.o
-	nasm -f elf32 src/boot/gdt.asm -o $(BUILD)/gdt_asm.o
-	nasm -f elf32 src/kernel/usermode.asm -o $(BUILD)/usermode.o
-	gcc $(CFLAGS) -c src/kernel/kernel.c -o $(BUILD)/kernel.o
-	gcc $(CFLAGS) -fno-strict-aliasing -c src/kernel/fs.c -o $(BUILD)/fs.o
-	gcc $(CFLAGS) -c src/kernel/mem.c -o $(BUILD)/mem.o
-	gcc $(CFLAGS) -c src/kernel/mm.c -o $(BUILD)/mm.o
-	gcc $(CFLAGS) -c src/kernel/panic.c -o $(BUILD)/panic.o
-	gcc $(CFLAGS) -c src/drivers/vga.c -o $(BUILD)/vga.o
-	gcc $(CFLAGS) -c src/drivers/framebuffer.c -o $(BUILD)/framebuffer.o
-	gcc $(CFLAGS) -c src/drivers/font.c -o $(BUILD)/font.o
-	gcc $(CFLAGS) -c src/drivers/console.c -o $(BUILD)/console.o
-	gcc $(CFLAGS) -c src/drivers/keyboard.c -o $(BUILD)/keyboard.o
-	gcc $(CFLAGS) -c src/drivers/speaker.c -o $(BUILD)/speaker.o
-	gcc $(CFLAGS) -c src/drivers/ata.c -o $(BUILD)/ata.o
-	gcc $(CFLAGS) -c src/drivers/pci.c -o $(BUILD)/pci.o
-	gcc $(CFLAGS) -c src/drivers/nvme.c -o $(BUILD)/nvme.o
-	gcc $(CFLAGS) -c src/drivers/disk.c -o $(BUILD)/disk.o
-	gcc $(CFLAGS) -c src/drivers/rtl8139.c -o $(BUILD)/rtl8139.o
-	gcc $(CFLAGS) -c src/kernel/net.c -o $(BUILD)/net.o
-	gcc $(CFLAGS) -c src/kernel/standart.c -o $(BUILD)/standart.o
-	gcc $(CFLAGS) -c src/boot/idt.c -o $(BUILD)/idt.o
-	gcc $(CFLAGS) -c src/boot/pic.c -o $(BUILD)/pic.o
-	gcc $(CFLAGS) -c src/boot/pit.c -o $(BUILD)/pit.o
-	gcc $(CFLAGS) -c src/boot/irq.c -o $(BUILD)/irq.o
-	gcc $(CFLAGS) -c src/kernel/scheduler.c -o $(BUILD)/scheduler.o
-	gcc $(CFLAGS) -c src/boot/gdt.c -o $(BUILD)/gdt.o
-	gcc $(CFLAGS) -c src/kernel/syscall.c -o $(BUILD)/syscall.o
-	gcc $(CFLAGS) -c crypto/lz4.c -o $(BUILD)/lz4.o
-	gcc $(CFLAGS) -c crypto/lz4hc.c -o $(BUILD)/lz4hc.o
-	gcc $(CFLAGS) -c crypto/sha256.c -o $(BUILD)/sha256.o
-	gcc $(CFLAGS) -c crypto/sha1.c -o $(BUILD)/sha1.o
-	gcc $(CFLAGS) -c crypto/base64.c -o $(BUILD)/base64.o
-	gcc $(CFLAGS) -c crypto/crc32.c -o $(BUILD)/crc32.o
-	gcc $(CFLAGS) -c net/addr.c -o $(BUILD)/addr.o
-	gcc $(CFLAGS) -c net/checksum.c -o $(BUILD)/checksum.o
-	gcc $(CFLAGS) -c net/ethernet.c -o $(BUILD)/ethernet.o
-	gcc $(CFLAGS) -c net/arp.c -o $(BUILD)/arp.o
-	gcc $(CFLAGS) -c net/ipv4.c -o $(BUILD)/ipv4.o
-	gcc $(CFLAGS) -c net/icmp.c -o $(BUILD)/icmp.o
-	gcc $(CFLAGS) -c net/udp.c -o $(BUILD)/udp.o
-	gcc $(CFLAGS) -c net/dns.c -o $(BUILD)/dns.o
-	gcc $(CFLAGS) -c src/kernel/recovery.c -o $(BUILD)/recovery.o
-	gcc $(CFLAGS) -c src/kernel/power.c -o $(BUILD)/power.o
-	gcc $(CFLAGS) -c src/kernel/installer.c -o $(BUILD)/installer.o
+	$(ARCH_BUILD)
+	$(CC) $(CFLAGS) -c src/kernel/kernel.c -o $(BUILD)/kernel.o
+	$(CC) $(CFLAGS) -fno-strict-aliasing -c src/kernel/fs.c -o $(BUILD)/fs.o
+	$(CC) $(CFLAGS) -c src/kernel/mem.c -o $(BUILD)/mem.o
+	$(CC) $(CFLAGS) -c src/kernel/mm.c -o $(BUILD)/mm.o
+	$(CC) $(CFLAGS) -c src/kernel/panic.c -o $(BUILD)/panic.o
+	$(CC) $(CFLAGS) -c src/drivers/framebuffer.c -o $(BUILD)/framebuffer.o
+	$(CC) $(CFLAGS) -c src/drivers/font.c -o $(BUILD)/font.o
+	$(CC) $(CFLAGS) -c src/drivers/console.c -o $(BUILD)/console.o
+	$(CC) $(CFLAGS) -c src/drivers/pci.c -o $(BUILD)/pci.o
+	$(CC) $(CFLAGS) -c src/drivers/nvme.c -o $(BUILD)/nvme.o
+	$(CC) $(CFLAGS) -c src/drivers/disk.c -o $(BUILD)/disk.o
+	$(CC) $(CFLAGS) -c src/drivers/rtl8139.c -o $(BUILD)/rtl8139.o
+	$(CC) $(CFLAGS) -c src/kernel/net.c -o $(BUILD)/net.o
+	$(CC) $(CFLAGS) -c src/kernel/standart.c -o $(BUILD)/standart.o
+	$(CC) $(CFLAGS) -c src/kernel/scheduler.c -o $(BUILD)/scheduler.o
+	$(CC) $(CFLAGS) -c src/kernel/irq.c -o $(BUILD)/irq.o
+	$(CC) $(CFLAGS) -c src/kernel/syscall.c -o $(BUILD)/syscall.o
+	$(CC) $(CFLAGS) -c crypto/lz4.c -o $(BUILD)/lz4.o
+	$(CC) $(CFLAGS) -c crypto/lz4hc.c -o $(BUILD)/lz4hc.o
+	$(CC) $(CFLAGS) -c crypto/sha256.c -o $(BUILD)/sha256.o
+	$(CC) $(CFLAGS) -c crypto/sha1.c -o $(BUILD)/sha1.o
+	$(CC) $(CFLAGS) -c crypto/base64.c -o $(BUILD)/base64.o
+	$(CC) $(CFLAGS) -c crypto/crc32.c -o $(BUILD)/crc32.o
+	$(CC) $(CFLAGS) -c net/addr.c -o $(BUILD)/addr.o
+	$(CC) $(CFLAGS) -c net/checksum.c -o $(BUILD)/checksum.o
+	$(CC) $(CFLAGS) -c net/ethernet.c -o $(BUILD)/ethernet.o
+	$(CC) $(CFLAGS) -c net/arp.c -o $(BUILD)/arp.o
+	$(CC) $(CFLAGS) -c net/ipv4.c -o $(BUILD)/ipv4.o
+	$(CC) $(CFLAGS) -c net/icmp.c -o $(BUILD)/icmp.o
+	$(CC) $(CFLAGS) -c net/udp.c -o $(BUILD)/udp.o
+	$(CC) $(CFLAGS) -c net/dns.c -o $(BUILD)/dns.o
 	{ \
 	echo '.section .rodata'; \
 	n=0; \
@@ -67,54 +59,36 @@ $(BUILD)/kernel.bin:
 		echo ".Lend$$n:"; \
 		n=$$((n + 1)); \
 	done; \
-	echo '.align 4'; \
+	echo '.align 8'; \
 	echo '.global bundle_table'; \
 	echo 'bundle_table:'; \
 	i=0; \
 	while [ $$i -lt $$n ]; do \
-		echo ".long .Lname$$i, .Lstart$$i, .Lend$$i"; \
+		echo "$(BUNDLE_PTR) .Lname$$i, .Lstart$$i, .Lend$$i"; \
 		i=$$((i + 1)); \
 	done; \
-	echo '.long 0, 0, 0'; \
+	echo '$(BUNDLE_PTR) 0, 0, 0'; \
 	echo '.section .note.GNU-stack,"",@progbits'; \
 	} > $(BUILD)/bundle.S
-	gcc -m32 -c $(BUILD)/bundle.S -o $(BUILD)/bundle_data.o
-	gcc $(CFLAGS) -c src/kernel/bundle.c -o $(BUILD)/bundle.o
-	ld -m elf_i386 -T linker.ld -o $(BUILD)/kernel.bin -nostdlib \
+	$(CC) $(ARCH_FLAGS) -c $(BUILD)/bundle.S -o $(BUILD)/bundle_data.o
+	$(CC) $(CFLAGS) -c src/kernel/bundle.c -o $(BUILD)/bundle.o
+	$(LD) -T arch/$(ARCH)/linker.ld -o $(KERNEL) -nostdlib \
 	$(BUILD)/bundle.o $(BUILD)/bundle_data.o \
-	$(BUILD)/boot.o $(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o \
-	$(BUILD)/panic.o $(BUILD)/vga.o $(BUILD)/framebuffer.o $(BUILD)/font.o $(BUILD)/console.o $(BUILD)/speaker.o $(BUILD)/keyboard.o $(BUILD)/standart.o \
-	$(BUILD)/idt.o $(BUILD)/scheduler.o $(BUILD)/interrupts.o $(BUILD)/ata.o \
-	$(BUILD)/gdt.o $(BUILD)/syscall.o $(BUILD)/usermode.o $(BUILD)/mem.o $(BUILD)/irq.o \
+	$(BUILD)/kernel.o $(BUILD)/fs.o $(BUILD)/mm.o $(BUILD)/panic.o $(BUILD)/standart.o \
+	$(BUILD)/scheduler.o $(BUILD)/syscall.o $(BUILD)/mem.o $(BUILD)/irq.o \
+	$(BUILD)/framebuffer.o $(BUILD)/font.o $(BUILD)/console.o \
 	$(BUILD)/pci.o $(BUILD)/nvme.o $(BUILD)/disk.o $(BUILD)/rtl8139.o $(BUILD)/net.o \
-	$(BUILD)/gdt_asm.o $(BUILD)/pic.o $(BUILD)/pit.o \
 	$(BUILD)/lz4.o $(BUILD)/lz4hc.o $(BUILD)/sha256.o $(BUILD)/sha1.o $(BUILD)/base64.o $(BUILD)/crc32.o \
 	$(BUILD)/addr.o $(BUILD)/checksum.o $(BUILD)/ethernet.o \
 	$(BUILD)/arp.o $(BUILD)/ipv4.o $(BUILD)/icmp.o $(BUILD)/udp.o $(BUILD)/dns.o \
-	$(BUILD)/recovery.o $(BUILD)/power.o $(BUILD)/installer.o
-
-$(FACTORY): $(BUILD)/kernel.bin tools/mkfactory.py include/layout.h
-	python3 tools/mkfactory.py config include/layout.h $(BUILD)/embedded.cfg $(BUILD)/disk.cfg
-	$(GRUB_MKIMAGE) -O i386-pc -p '(hd0)' -c $(BUILD)/embedded.cfg -o $(BUILD)/core.img $(GRUB_MODULES)
-	python3 tools/mkfactory.py image include/layout.h $(GRUB_BOOT_IMG) $(BUILD)/core.img $(BUILD)/kernel.bin $(BUILD)/disk.cfg $(FACTORY)
-
-iso: $(BUILD)/kernel.bin $(FACTORY)
-	mkdir -p $(ISO)/boot
-	cp $(BUILD)/kernel.bin $(ISO)/boot/
-	cp $(FACTORY) $(ISO)/boot/factory.img
-	$(GRUB_MKRESCUE) -o katela.iso $(ISO)
+	$(ARCH_OBJECTS)
+	$(ARCH_POST_LINK)
 
 disk.img:
 	qemu-img create -f raw disk.img 16M
 
-run: iso disk.img
-	qemu-system-i386 -cdrom katela.iso -hda disk.img -netdev user,id=net0 -device rtl8139,netdev=net0 -machine pcspk-audiodev=snd -audiodev alsa,id=snd
-
-run-nvme: iso disk.img
-	qemu-system-i386 -cdrom katela.iso -drive file=disk.img,if=none,id=nvm,format=raw -device nvme,serial=katela,drive=nvm -netdev user,id=net0 -device rtl8139,netdev=net0 -machine pcspk-audiodev=snd -audiodev alsa,id=snd
-
 clean:
-	rm -rf build katela.iso disk.img $(ISO)/boot/factory.img
+	rm -rf build katela.iso katela-x86_64.iso disk.img $(ISO)/boot/factory.img
 
 .PHONY: all iso run run-nvme clean
 # Add Makefile's command names here

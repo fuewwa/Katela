@@ -1,5 +1,5 @@
-#include "vga.h"
-#include "../../include/io.h"
+#include "../../src/drivers/vga.h"
+#include "io.h"
 
 #define WIDTH VGA_COLS
 #define HEIGHT VGA_ROWS

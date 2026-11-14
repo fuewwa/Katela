@@ -1,7 +1,7 @@
 #include "../../include/recovery.h"
 #include "../../include/layout.h"
 #include "../../include/fs.h"
-#include "../drivers/disk.h"
+#include "../../src/drivers/disk.h"
 
 #define SECTOR 512
 #define CHUNK_SECTORS 64
@@ -30,17 +30,17 @@ struct module {
 };
 
 static const unsigned char *find_image(void) {
-	const struct info *info = (const struct info *)multiboot_info;
+	const struct info *info = (const struct info *)(unsigned long)multiboot_info;
 
 	if (!info || !(info->flags & INFO_FLAG_MODS) || info->mods_count == 0) {
 		return 0;
 	}
 
-	const struct module *modules = (const struct module *)info->mods_addr;
+	const struct module *modules = (const struct module *)(unsigned long)info->mods_addr;
 
 	for (unsigned int i = 0; i < info->mods_count; i++) {
 		if (modules[i].end - modules[i].start == FACTORY_SECTORS * SECTOR) {
-			return (const unsigned char *)modules[i].start;
+			return (const unsigned char *)(unsigned long)modules[i].start;
 		}
 	}
 	return 0;

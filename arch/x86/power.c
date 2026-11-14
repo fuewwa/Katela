@@ -1,5 +1,5 @@
 #include "../../include/recovery.h"
-#include "../../include/io.h"
+#include "io.h"
 
 struct table_header {
 	char signature[4];
@@ -42,7 +42,7 @@ static int checksum_ok(const void *data, unsigned int length) {
 
 static const struct rsdp *scan_rsdp(unsigned int start, unsigned int end) {
 	for (unsigned int addr = start; addr + sizeof(struct rsdp) <= end; addr += 16) {
-		const struct rsdp *candidate = (const struct rsdp *)addr;
+		const struct rsdp *candidate = (const struct rsdp *)(unsigned long)addr;
 
 		if (same(candidate->signature, "RSD PTR ", 8) && checksum_ok(candidate, 20)) {
 			return candidate;
@@ -65,7 +65,7 @@ static const struct rsdp *find_rsdp(void) {
 }
 
 static const struct table_header *find_table(const struct rsdp *rsdp, const char *signature) {
-	const struct table_header *rsdt = (const struct table_header *)rsdp->rsdt;
+	const struct table_header *rsdt = (const struct table_header *)(unsigned long)rsdp->rsdt;
 
 	if (!same(rsdt->signature, "RSDT", 4)) {
 		return 0;
@@ -75,7 +75,7 @@ static const struct table_header *find_table(const struct rsdp *rsdp, const char
 	const unsigned int *entries = (const unsigned int *)((const char *)rsdt + sizeof(struct table_header));
 
 	for (unsigned int i = 0; i < count; i++) {
-		const struct table_header *table = (const struct table_header *)entries[i];
+		const struct table_header *table = (const struct table_header *)(unsigned long)entries[i];
 
 		if (same(table->signature, signature, 4)) {
 			return table;
@@ -132,7 +132,7 @@ static void acpi_power_off(void) {
 	}
 
 	const char *base = (const char *)fadt;
-	const struct table_header *dsdt = (const struct table_header *)read32(base, 40);
+	const struct table_header *dsdt = (const struct table_header *)(unsigned long)read32(base, 40);
 	unsigned int smi_command = read32(base, 48);
 	unsigned char acpi_enable = (unsigned char)base[52];
 	unsigned int pm1a = read32(base, 64);
@@ -200,7 +200,7 @@ void recovery_reboot(void) {
 
 	struct {
 		unsigned short limit;
-		unsigned int base;
+		unsigned long base;
 	} __attribute__((packed)) empty = {0, 0};
 
 	asm volatile("lidt %0\n\tint $3" : : "m"(empty));

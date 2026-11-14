@@ -1,6 +1,6 @@
 #include "rtl8139.h"
 #include "pci.h"
-#include "../../include/io.h"
+#include "io.h"
 #include "../../include/irq.h"
 #include "../../include/scheduler.h"
 
@@ -98,7 +98,7 @@ static void rx_start(void)
 	outb(io_base + REG_CR, CR_TE | CR_RE);
 	outl(io_base + REG_RCR, RCR_VALUE);
 	outl(io_base + REG_TCR, TCR_VALUE);
-	outl(io_base + REG_RBSTART, (unsigned int)rx_ring);
+	outl(io_base + REG_RBSTART, (unsigned int)(unsigned long)rx_ring);
 	outw(io_base + REG_CAPR, (unsigned short)(rx_offset - 16));
 }
 
@@ -301,7 +301,7 @@ int rtl8139_send(const void *frame, unsigned int size)
 		tx_buffers[slot][length++] = 0;
 	}
 
-	outl(io_base + REG_TSAD0 + slot * 4, (unsigned int)tx_buffers[slot]);
+	outl(io_base + REG_TSAD0 + slot * 4, (unsigned int)(unsigned long)tx_buffers[slot]);
 	outl(io_base + REG_TSD0 + slot * 4, length);
 
 	tx_next = (slot + 1) % TX_SLOTS;

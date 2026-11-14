@@ -1,5 +1,6 @@
 #include "../../include/panic.h"
 #include "../drivers/console.h"
+#include "arch.h"
 
 void panic(const char *message)
 {
@@ -8,9 +9,5 @@ void panic(const char *message)
     print(message);
     print("\nSystem halted.\n");
 
-    asm volatile("cli");
-
-    while (1) {
-        asm volatile("hlt");
-    }
+    cpu_stop();
 }

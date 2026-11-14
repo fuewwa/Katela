@@ -13,7 +13,7 @@ This document does not replace `README.md` or `CONTRIBUTING.md`. Read both first
 
 ## What Katela is
 
-Katela is a standalone kernel written from scratch in C and x86 assembly. Development began on April 26, 2026. It has its own core, its own shell, its own filesystem, and its own drivers.
+Katela is a standalone kernel written from scratch in C and assembly for x86 and x86_64. Development began on April 26, 2026. It has its own core, its own shell, its own filesystem, and its own drivers.
 
 Katela is not built as a learning exercise that stops at "hello world", and it is not a collection of disconnected experiments. Every subsystem, from the shell to the filesystem to the drivers, is designed as part of one cohesive kernel.
 

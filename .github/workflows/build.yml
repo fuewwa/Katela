@@ -37,3 +37,33 @@ jobs:
           name: katela-iso
           path: katela.iso
           if-no-files-found: error
+
+  build-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential nasm grub-pc-bin grub-common xorriso mtools make
+
+      - name: Build
+        run: |
+          make clean
+          make ARCH=x86_64
+
+      - name: Verify artifacts
+        run: |
+          test -s build/x86_64/kernel.bin
+          test -s katela-x86_64.iso
+          file build/x86_64/kernel.bin
+          ls -lh katela-x86_64.iso
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: katela-x86_64-iso
+          path: katela-x86_64.iso
+          if-no-files-found: error

@@ -1,10 +1,17 @@
 # Katela
 
-**Katela** is a real, standalone kernel written from scratch in C and x86 Assembly. Development began on **April 26, 2026**.
+**Katela** is a real, standalone kernel written from scratch in C and assembly for x86 and x86_64. Development began on **April 26, 2026**.
 
 Katela is **not** a hobby os, **not** a toy os, **not** even an operating system, and it is **not** built as a learning exercise that stops at "hello world". It is engineered as a genuine kernel project: its own core, its own shell, and its own filesystem, all built with the intention of being a real, usable kernel — not a proof of concept and not a weekend experiment.
 
 Katela does **not** follow UNIX or POSIX conventions. It does not aim for POSIX compliance, UNIX-like semantics, or compatibility with existing UNIX tooling. Katela follows its own design philosophy, its own system call conventions, its own shell behavior, and its own way of doing things from the ground up.
+
+## Supported architectures
+
+- **x86** (32-bit). The default target. Built with `make`.
+- **x86_64** (64-bit long mode). Built with `make ARCH=x86_64`. It has the same features as the x86 version.
+
+Both boot through GRUB (BIOS, Multiboot) and share the PC drivers. Only a processor that supports 64-bit mode can run the x86_64 version.
 
 ## Philosophy
 
@@ -25,7 +32,9 @@ Maintainers can also use AI without following some of these rules, but the respo
 
 ## Requirements
 
-To build and run Katela you need a cross-platform toolchain consisting of an assembler (NASM), a GCC-based cross/multilib compiler, GRUB tools for producing a bootable ISO, `xorriso` for ISO creation, and QEMU for emulation/testing (you also can try another VMs like virtualbox or wmware).
+To build and run Katela you need a cross-platform toolchain consisting of an assembler (NASM), a GCC-based cross/multilib compiler, binutils (`ld` and `objcopy`), GRUB tools for producing a bootable ISO, `xorriso` for ISO creation, and QEMU for emulation/testing (you also can try another VMs like virtualbox or wmware).
+
+The x86 version is run with `qemu-system-i386` and the x86_64 version with `qemu-system-x86_64`. The packages below provide both, except where a note says otherwise. The multilib packages (`gcc-multilib` and similar) are only needed for the 32-bit x86 version, the x86_64 version is built with the normal 64-bit compiler.
 
 ### Debian-based
 
@@ -50,6 +59,7 @@ environment.systemPackages = with pkgs; [
   gcc
   gnumake
   nasm
+  binutils
   grub2
   xorriso
   qemu
@@ -83,13 +93,15 @@ sudo xbps-install -S gcc make nasm grub xorriso qemu
 ### Alpine Linux
 
 ```bash
-sudo apk add gcc make nasm grub grub-efi xorriso qemu-system-x86_64
+sudo apk add gcc make nasm grub grub-efi xorriso qemu-system-i386 qemu-system-x86_64
 ```
+
+> Note: on Alpine the two QEMU emulators are separate packages. Install `qemu-system-i386` for the x86 version and `qemu-system-x86_64` for the x86_64 version.
 
 ### Slackware
 
 ```bash
-sudo slackpkg install gcc make nasm grub xorriso
+sudo slackpkg install gcc make nasm binutils grub xorriso
 ```
 
 > Note: QEMU is not in the official Slackware repository. You need to build from source.
@@ -97,8 +109,10 @@ sudo slackpkg install gcc make nasm grub xorriso
 ### Gentoo Linux
 
 ```bash
-sudo emerge --ask sys-devel/gcc sys-devel/make dev-lang/nasm sys-boot/grub dev-libs/libisoburn app-emulation/qemu
+sudo emerge --ask sys-devel/gcc sys-devel/binutils sys-devel/make dev-lang/nasm sys-boot/grub dev-libs/libisoburn app-emulation/qemu
 ```
+
+> Note: make sure `i386` and `x86_64` are both listed in `QEMU_SOFTMMU_TARGETS` when building `app-emulation/qemu`.
 
 ### OpenSUSE
 
@@ -114,6 +128,8 @@ Install [Homebrew](https://brew.sh) first, then:
 brew install nasm xorriso qemu make
 brew install x86_64-elf-gcc x86_64-elf-binutils
 ```
+
+> Note: the x86_64 version also needs `objcopy`, which is part of `x86_64-elf-binutils` (installed as `x86_64-elf-objcopy`).
 
 > Note: macOS does not ship a native `grub-pc-bin` package. You'll need a cross-compiled GRUB toolchain (e.g. via `brew install i686-elf-grub` from a suitable tap, or by building GRUB from source) to produce a bootable ISO.
 
@@ -141,6 +157,12 @@ Build Katela:
 make
 ```
 
+Build the x86_64 version. It is written to `build/x86_64/kernel.bin` and the bootable image is `katela-x86_64.iso`:
+
+```bash
+make ARCH=x86_64
+```
+
 Build and run Katela in QEMU:
 
 ```bash
@@ -153,7 +175,13 @@ Build and run Katela in QEMU with the disk attached as an NVMe device:
 make run-nvme
 ```
 
-Clean all build artifacts:
+Build and run the x86_64 version in QEMU (`make ARCH=x86_64 run-nvme` attaches the disk as an NVMe device):
+
+```bash
+make ARCH=x86_64 run
+```
+
+Clean all build artifacts for every architecture:
 
 ```bash
 make clean

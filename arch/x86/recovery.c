@@ -1,6 +1,6 @@
 #include "../../include/recovery.h"
-#include "../../include/io.h"
-#include "../drivers/console.h"
+#include "io.h"
+#include "../../src/drivers/console.h"
 
 #define MULTIBOOT_MAGIC 0x2BADB002
 #define INFO_FLAG_CMDLINE (1u << 2)
@@ -238,12 +238,12 @@ int recovery_requested(void) {
 		return 0;
 	}
 
-	const struct info *info = (const struct info *)multiboot_info;
+	const struct info *info = (const struct info *)(unsigned long)multiboot_info;
 
 	if (!(info->flags & INFO_FLAG_CMDLINE) || info->cmdline == 0) {
 		return 0;
 	}
-	return has_word((const char *)info->cmdline, "recovery");
+	return has_word((const char *)(unsigned long)info->cmdline, "recovery");
 }
 
 void recovery_main(void) {

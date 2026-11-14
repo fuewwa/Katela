@@ -4,6 +4,10 @@ GOALS := $(if $(MAKECMDGOALS),$(MAKECMDGOALS),all)
 find_missing = $(strip $(foreach t,$(1),$(if $(shell command -v $(t) 2>/dev/null),,$(t))))
 find_first = $(firstword $(foreach t,$(1),$(if $(shell command -v $(t) 2>/dev/null),$(t))))
 
+ifeq ($(filter $(ARCH),x86 x86_64),)
+$(error Unknown ARCH '$(ARCH)', supported values are x86 and x86_64)
+endif
+
 GRUB_MKRESCUE := $(call find_first,grub-mkrescue grub2-mkrescue)
 GRUB_MKIMAGE := $(call find_first,grub-mkimage grub2-mkimage)
 GRUB_BOOT_IMG := $(firstword $(wildcard /usr/lib/grub/i386-pc/boot.img /usr/lib64/grub/i386-pc/boot.img /usr/share/grub/i386-pc/boot.img))
@@ -14,6 +18,9 @@ endif
 
 ifneq ($(filter-out clean,$(GOALS)),)
 MISSING_TOOLS := $(call find_missing,nasm gcc ld python3)
+ifeq ($(ARCH),x86_64)
+MISSING_TOOLS += $(call find_missing,objcopy)
+endif
 endif
 
 ifneq ($(filter all iso run run-nvme,$(GOALS)),)
@@ -34,7 +41,12 @@ MISSING_TOOLS += $(call find_missing,qemu-img)
 endif
 
 ifneq ($(filter run run-nvme,$(GOALS)),)
+ifeq ($(ARCH),x86)
 MISSING_TOOLS += $(call find_missing,qemu-system-i386)
+endif
+ifeq ($(ARCH),x86_64)
+MISSING_TOOLS += $(call find_missing,qemu-system-x86_64)
+endif
 endif
 
 ifneq ($(strip $(MISSING_TOOLS)),)

@@ -1,5 +1,6 @@
 #include "nvme.h"
 #include "pci.h"
+#include "arch.h"
 #include "../../include/mem.h"
 
 #define REG_CAP_LOW     0x00
@@ -101,23 +102,19 @@ static unsigned int lba_shift;
 static unsigned int max_transfer;
 static unsigned int total_sectors;
 
-static inline void barrier(void) {
-    asm volatile("lock; addl $0, (%%esp)" : : : "memory", "cc");
-}
-
 static unsigned int reg_read(unsigned int offset) {
-    return *(volatile unsigned int *)(regs_base + offset);
+    return *(volatile unsigned int *)(unsigned long)(regs_base + offset);
 }
 
 static void reg_write(unsigned int offset, unsigned int value) {
-    *(volatile unsigned int *)(regs_base + offset) = value;
+    *(volatile unsigned int *)(unsigned long)(regs_base + offset) = value;
 }
 
 static unsigned int load_u32(unsigned int offset) {
-    return (unsigned int)identify_buf[offset]
-        | ((unsigned int)identify_buf[offset + 1] << 8)
-        | ((unsigned int)identify_buf[offset + 2] << 16)
-        | ((unsigned int)identify_buf[offset + 3] << 24);
+    return (unsigned int)(unsigned long)identify_buf[offset]
+        | ((unsigned int)(unsigned long)identify_buf[offset + 1] << 8)
+        | ((unsigned int)(unsigned long)identify_buf[offset + 2] << 16)
+        | ((unsigned int)(unsigned long)identify_buf[offset + 3] << 24);
 }
 
 static unsigned int doorbell(unsigned int queue_id, unsigned int completion) {
@@ -167,7 +164,7 @@ static int execute(struct queue *q, struct nvme_command *cmd) {
     memcpy(&q->sq[q->sq_tail], cmd, sizeof(*cmd));
     q->sq_tail = (q->sq_tail + 1) & (QUEUE_ENTRIES - 1);
 
-    barrier();
+    memory_barrier();
     reg_write(q->sq_doorbell, q->sq_tail);
 
     entry = &q->cq[q->cq_head];
@@ -179,7 +176,7 @@ static int execute(struct queue *q, struct nvme_command *cmd) {
         }
     }
 
-    barrier();
+    memory_barrier();
     status = entry->status;
     completed_id = entry->command_id;
 
@@ -206,7 +203,7 @@ static int identify(unsigned int cns, unsigned int nsid) {
 
     cmd.cdw0 = ADMIN_IDENTIFY;
     cmd.nsid = nsid;
-    cmd.prp1[0] = (unsigned int)identify_buf;
+    cmd.prp1[0] = (unsigned int)(unsigned long)identify_buf;
     cmd.cdw10 = cns;
 
     return execute(&admin, &cmd);
@@ -219,7 +216,7 @@ static int create_io_queues(void) {
 
     memset(&cmd, 0, sizeof(cmd));
     cmd.cdw0 = ADMIN_CREATE_CQ;
-    cmd.prp1[0] = (unsigned int)io_cq;
+    cmd.prp1[0] = (unsigned int)(unsigned long)io_cq;
     cmd.cdw10 = ((QUEUE_ENTRIES - 1) << 16) | IO_QUEUE_ID;
     cmd.cdw11 = 1u;
 
@@ -229,7 +226,7 @@ static int create_io_queues(void) {
 
     memset(&cmd, 0, sizeof(cmd));
     cmd.cdw0 = ADMIN_CREATE_SQ;
-    cmd.prp1[0] = (unsigned int)io_sq;
+    cmd.prp1[0] = (unsigned int)(unsigned long)io_sq;
     cmd.cdw10 = ((QUEUE_ENTRIES - 1) << 16) | IO_QUEUE_ID;
     cmd.cdw11 = (IO_QUEUE_ID << 16) | 1u;
 
@@ -333,9 +330,9 @@ static int controller_init(void) {
     queue_setup(&admin, admin_sq, admin_cq, 0);
 
     reg_write(REG_AQA, ((QUEUE_ENTRIES - 1) << 16) | (QUEUE_ENTRIES - 1));
-    reg_write(REG_ASQ_LOW, (unsigned int)admin_sq);
+    reg_write(REG_ASQ_LOW, (unsigned int)(unsigned long)admin_sq);
     reg_write(REG_ASQ_HIGH, 0);
-    reg_write(REG_ACQ_LOW, (unsigned int)admin_cq);
+    reg_write(REG_ACQ_LOW, (unsigned int)(unsigned long)admin_cq);
     reg_write(REG_ACQ_HIGH, 0);
 
     reg_write(REG_CC, CC_ENABLE | CC_IOSQES | CC_IOCQES);
@@ -371,17 +368,17 @@ static int run_io(unsigned int opcode, unsigned int block, unsigned int blocks) 
 
     cmd.cdw0 = opcode;
     cmd.nsid = NAMESPACE_ID;
-    cmd.prp1[0] = (unsigned int)bounce;
+    cmd.prp1[0] = (unsigned int)(unsigned long)bounce;
 
     if (pages == 2) {
-        cmd.prp2[0] = (unsigned int)bounce + PAGE_SIZE;
+        cmd.prp2[0] = (unsigned int)(unsigned long)bounce + PAGE_SIZE;
     } else if (pages > 2) {
         for (i = 1; i < pages; i++) {
-            prp_list[(i - 1) * 2] = (unsigned int)bounce + i * PAGE_SIZE;
+            prp_list[(i - 1) * 2] = (unsigned int)(unsigned long)bounce + i * PAGE_SIZE;
             prp_list[(i - 1) * 2 + 1] = 0;
         }
 
-        cmd.prp2[0] = (unsigned int)prp_list;
+        cmd.prp2[0] = (unsigned int)(unsigned long)prp_list;
     }
 
     cmd.cdw10 = block;

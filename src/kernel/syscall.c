@@ -10,41 +10,29 @@ static int is_exec(const char *line) {
            (line[4] == ' ' || line[4] == '\0');
 }
 
-void syscall_dispatch(struct regs *r) {
-    switch (r->eax) {
+unsigned long syscall_dispatch(unsigned long number, unsigned long argument) {
+    switch (number) {
         case SYS_WRITE:
-            print((const char *)r->ebx);
-            r->eax = 0;
-            break;
+            print((const char *)argument);
+            return 0;
         case SYS_RUN:
-            if (is_exec((const char *)r->ebx)) {
+            if (is_exec((const char *)argument)) {
                 print("exec: nested exec is not allowed\n");
-                r->eax = (unsigned int)-1;
-                break;
+                return (unsigned long)-1;
             }
-            execute_command((char *)r->ebx);
-            r->eax = 0;
-            break;
+            execute_command((char *)argument);
+            return 0;
         case SYS_YIELD:
             task_yield();
-            r->eax = 0;
-            break;
+            return 0;
         case SYS_SLEEP:
-            task_sleep(r->ebx);
-            r->eax = 0;
-            break;
+            task_sleep(argument);
+            return 0;
         case SYS_UPTIME:
-            r->eax = uptime_ms();
-            break;
+            return uptime_ms();
         case SYS_GETKEY:
-            r->eax = (unsigned int)(unsigned char)get_key();
-            break;
+            return (unsigned long)(unsigned char)get_key();
         default:
-            r->eax = (unsigned int)-1;
-            break;
+            return (unsigned long)-1;
     }
-}
-
-void gpf_handler(void) {
-    panic("general protection fault");
 }

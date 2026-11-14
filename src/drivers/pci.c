@@ -1,5 +1,5 @@
 #include "pci.h"
-#include "../../include/io.h"
+#include "io.h"
 
 #define PCI_ADDRESS_PORT 0xCF8
 #define PCI_DATA_PORT    0xCFC

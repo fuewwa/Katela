@@ -11,17 +11,17 @@
 #include "../../include/mm.h"
 #include "../../include/net.h"
 #include "../../include/scheduler.h"
+#include "arch.h"
 
 static unsigned char ring3_stack[4096];
 static const char *g_exec_script;
 
 static void urun(const char *line) {
-    unsigned int ret;
-    asm volatile("int $0x80" : "=a"(ret) : "a"(SYS_RUN), "b"(line));
+    user_syscall(SYS_RUN, (unsigned long)line);
 }
 
 static void uexit(void) {
-    asm volatile("int $0x80" : : "a"(SYS_EXIT));
+    user_syscall(SYS_EXIT, 0);
 }
 
 static void script_interpreter_entry(void) {
@@ -291,8 +291,7 @@ void execute_command(char *buffer) {
 
         print("You can safely turn off your PC now.\n");
 
-        asm volatile("cli");
-        while (1) asm volatile("hlt");
+        cpu_stop();
 
     } else if (strcmp(command, "beep") == 0) {
 

@@ -1,6 +1,6 @@
-#include "keyboard.h"
+#include "../../src/drivers/keyboard.h"
 #include "../../include/scheduler.h"
-#include "../../include/io.h"
+#include "io.h"
 
 char get_key() {
     static int shift = 0;

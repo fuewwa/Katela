@@ -5,7 +5,7 @@ section .text
 extern scheduler_tick
 extern scheduler_switch
 extern task_exit
-extern syscall_dispatch
+extern syscall_entry
 extern gpf_handler
 extern g_kernel_resume_esp
 extern irq_dispatch
@@ -71,7 +71,7 @@ isr_syscall:
 
     pushad
     push esp
-    call syscall_dispatch
+    call syscall_entry
     add esp, 4
     popad
     iretd

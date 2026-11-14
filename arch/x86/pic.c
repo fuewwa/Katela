@@ -1,5 +1,6 @@
 #include "pic.h"
 #include "io.h"
+#include "../../include/irq.h"
 
 void pic_remap(void) {
     outb(0x20, 0x11); io_wait();
@@ -15,13 +16,13 @@ void pic_remap(void) {
     outb(0xA1, 0xFF);
 }
 
-void pic_mask(unsigned int irq) {
+void irq_mask(unsigned int irq) {
     unsigned short port = irq < 8 ? 0x21 : 0xA1;
 
     outb(port, (unsigned char)(inb(port) | (1u << (irq & 7))));
 }
 
-void pic_unmask(unsigned int irq) {
+void irq_unmask(unsigned int irq) {
     unsigned short port = irq < 8 ? 0x21 : 0xA1;
 
     outb(port, (unsigned char)(inb(port) & ~(1u << (irq & 7))));
@@ -31,7 +32,7 @@ void pic_unmask(unsigned int irq) {
     }
 }
 
-void pic_eoi(unsigned int irq) {
+void irq_eoi(unsigned int irq) {
     if (irq >= 8) {
         outb(0xA0, 0x20);
     }
@@ -39,7 +40,7 @@ void pic_eoi(unsigned int irq) {
     outb(0x20, 0x20);
 }
 
-int pic_spurious(unsigned int irq) {
+int irq_spurious(unsigned int irq) {
     unsigned short port;
 
     if (irq != 7 && irq != 15) {
@@ -58,4 +59,8 @@ int pic_spurious(unsigned int irq) {
     }
 
     return 1;
+}
+
+int irq_valid(unsigned int irq) {
+    return irq != 0 && irq != 2 && irq < IRQ_COUNT;
 }

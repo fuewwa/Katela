@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Katela - a kernel written from scratch</title>
-<meta name="description" content="Katela is a standalone kernel written from scratch in C and x86 Assembly, with its own shell and its own filesystem.">
+<meta name="description" content="Katela is a standalone kernel written from scratch in C and assembly for x86 and x86_64, with its own shell and its own filesystem.">
 <meta name="theme-color" content="#1d2021">
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,7 +27,7 @@
   <section class="hero">
     <div class="hero-text">
       <h1>A kernel that doesn't ask permission from UNIX.</h1>
-      <p class="lead">Katela is a standalone kernel written from scratch in C and x86 Assembly. Its own core, its own shell, its own filesystem</p>
+      <p class="lead">Katela is a standalone kernel written from scratch in C and assembly for x86 and x86_64. Its own core, its own shell, its own filesystem</p>
       <div class="actions">
         <a class="btn primary" href="https://github.com/fuewwa/Katela/releases">Download a release</a>
         <a class="btn" href="https://github.com/fuewwa/Katela">View the source</a>
@@ -56,7 +56,7 @@
     </div>
     <dl class="facts">
       <div><dt>Started</dt><dd>April 26, 2026</dd></div>
-      <div><dt>Written in</dt><dd>C and x86 Assembly</dd></div>
+      <div><dt>Written in</dt><dd>C and assembly (x86 and x86_64)</dd></div>
       <div><dt>License</dt><dd>GPL v3.0</dd></div>
     </dl>
   </section>
@@ -64,6 +64,7 @@
   <section id="inside" class="block">
     <h2>What's inside</h2>
     <ul class="rows">
+      <li><h3>Two architectures</h3><p>Katela runs on 32-bit x86 and on x86_64 (64-bit long mode). Both versions have the same features.</p></li>
       <li><h3>Framebuffer console</h3><p>The console draws text on a 1024x768 framebuffer set up by GRUB. If GRUB cannot provide one, Katela falls back to VGA text mode.</p></li>
       <li><h3>User mode</h3><p>Programs run in ring 3, separated from the kernel.</p></li>
       <li><h3>A real filesystem</h3><p>Early builds kept everything in memory with a limit of 16 files. Now storage is limited only by the size of your drive.</p></li>
@@ -75,7 +76,7 @@
 
   <section id="build" class="block">
     <h2>Build it</h2>
-    <p class="note">You need NASM, a GCC-based cross or multilib compiler, GRUB tools, xorriso and QEMU. VirtualBox and VMware should also work.</p>
+    <p class="note">You need NASM, a GCC-based cross or multilib compiler, binutils, GRUB tools, xorriso and QEMU. VirtualBox and VMware should also work.</p>
     <div class="cols code">
       <div>
         <h3>Debian and Ubuntu</h3>
@@ -93,6 +94,7 @@
       <li><h3><code>make</code></h3><p>Build Katela.</p></li>
       <li><h3><code>make run</code></h3><p>Build and run in QEMU.</p></li>
       <li><h3><code>make run-nvme</code></h3><p>Build and run in QEMU with the disk attached as an NVMe device.</p></li>
+      <li><h3><code>make ARCH=x86_64</code></h3><p>Build the x86_64 version. Add <code>run</code> or <code>run-nvme</code> to run it in QEMU.</p></li>
       <li><h3><code>make clean</code></h3><p>Remove all build artifacts.</p></li>
     </ul>
   </section>

@@ -1,6 +1,6 @@
-#include "speaker.h"
+#include "../../src/drivers/speaker.h"
 #include "../../include/scheduler.h"
-#include "../../include/io.h"
+#include "io.h"
 
 #define PIT_CH2_PORT    0x42
 #define PIT_CMD_PORT    0x43

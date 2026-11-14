@@ -1,5 +1,5 @@
-#include "ata.h"
-#include "../../include/io.h"
+#include "../../src/drivers/ata.h"
+#include "io.h"
 
 #define ATA_DATA        0x1F0
 #define ATA_ERROR       0x1F1

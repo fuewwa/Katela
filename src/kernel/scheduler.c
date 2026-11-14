@@ -1,14 +1,10 @@
 #include "scheduler.h"
-#include "idt.h"
-#include "pic.h"
-#include "pit.h"
+#include "arch.h"
 #include "../../include/mm.h"
 #include "../../include/panic.h"
 
-extern void task_trampoline(void);
-
 #define MAX_TASKS 16
-#define STACK_SIZE 8192
+#define STACK_SIZE ARCH_STACK_SIZE
 #define NAME_SIZE 24
 #define MS_PER_TICK (1000 / TICK_HZ)
 #define MAX_WAIT_TICKS 0x7FFFFFF0u
@@ -22,7 +18,7 @@ enum task_state {
 };
 
 struct task {
-    unsigned int esp;
+    unsigned long sp;
     unsigned char *stack;
     enum task_state state;
     unsigned int id;
@@ -43,16 +39,6 @@ static unsigned int next_id = 1;
 static int running_flag = 0;
 static volatile unsigned int ticks = 0;
 
-static inline unsigned int irq_save(void) {
-    unsigned int flags;
-    asm volatile("pushfl; popl %0; cli" : "=r"(flags) : : "memory");
-    return flags;
-}
-
-static inline void irq_restore(unsigned int flags) {
-    asm volatile("pushl %0; popfl" : : "r"(flags) : "memory", "cc");
-}
-
 static void copy_name(char *dest, const char *src) {
     unsigned int i = 0;
 
@@ -65,33 +51,9 @@ static void copy_name(char *dest, const char *src) {
     dest[i] = '\0';
 }
 
-static unsigned int build_stack(unsigned char *base, void (*entry)(void)) {
-    unsigned short selector;
-    unsigned int *sp;
-
-    asm volatile("mov %%cs, %0" : "=r"(selector));
-
-    sp = (unsigned int *)(((unsigned int)(base + STACK_SIZE)) & ~15u);
-
-    *(--sp) = 0x202;
-    *(--sp) = selector;
-    *(--sp) = (unsigned int)task_trampoline;
-
-    *(--sp) = 0;
-    *(--sp) = 0;
-    *(--sp) = 0;
-    *(--sp) = 0;
-    *(--sp) = 0;
-    *(--sp) = 0;
-    *(--sp) = 0;
-    *(--sp) = (unsigned int)entry;
-
-    return (unsigned int)sp;
-}
-
 static void idle_entry(void) {
     while (1) {
-        asm volatile("hlt");
+        cpu_idle();
     }
 }
 
@@ -202,12 +164,12 @@ static void wake_expired(void) {
     }
 }
 
-static unsigned int schedule(unsigned int old_esp) {
+static unsigned long schedule(unsigned long old_sp) {
     struct task *next = &idle_task;
     unsigned int probe = last_slot;
     unsigned int i;
 
-    current->esp = old_esp;
+    current->sp = old_sp;
     if (current->state == TASK_RUNNING) {
         current->state = TASK_READY;
     }
@@ -224,7 +186,7 @@ static unsigned int schedule(unsigned int old_esp) {
     current = next;
     current->state = TASK_RUNNING;
 
-    return current->esp;
+    return current->sp;
 }
 
 static int block_current(struct wait_queue *q, int timed, unsigned int deadline) {
@@ -248,7 +210,7 @@ static int block_current(struct wait_queue *q, int timed, unsigned int deadline)
     t->deadline = deadline;
     t->state = TASK_BLOCKED;
 
-    asm volatile("int $0x81" : : : "memory");
+    context_yield();
 
     return t->wake_result;
 }
@@ -257,33 +219,33 @@ void task_exit(void) {
     current->state = TASK_TERMINATED;
 
     while (1) {
-        asm volatile("int $0x81" : : : "memory");
+        context_yield();
     }
 }
 
-unsigned int scheduler_tick(unsigned int old_esp) {
+unsigned long scheduler_tick(unsigned long old_sp) {
     if (!running_flag) {
-        return old_esp;
+        return old_sp;
     }
 
     ticks++;
     wake_expired();
-    return schedule(old_esp);
+    return schedule(old_sp);
 }
 
-unsigned int scheduler_switch(unsigned int old_esp) {
+unsigned long scheduler_switch(unsigned long old_sp) {
     if (!running_flag) {
-        return old_esp;
+        return old_sp;
     }
 
-    return schedule(old_esp);
+    return schedule(old_sp);
 }
 
 void scheduler_init(void) {
     struct task *main_task = &tasks[0];
 
     main_task->stack = 0;
-    main_task->esp = 0;
+    main_task->sp = 0;
     main_task->state = TASK_RUNNING;
     main_task->id = next_id++;
     copy_name(main_task->name, "main");
@@ -292,7 +254,7 @@ void scheduler_init(void) {
     if (!idle_task.stack) {
         panic("scheduler: out of memory for idle stack");
     }
-    idle_task.esp = build_stack(idle_task.stack, idle_entry);
+    idle_task.sp = context_init(idle_task.stack, STACK_SIZE, idle_entry);
     idle_task.state = TASK_READY;
     idle_task.id = 0;
     copy_name(idle_task.name, "idle");
@@ -304,11 +266,10 @@ void scheduler_init(void) {
 }
 
 void scheduler_start(void) {
-    idt_init();
-    pic_remap();
-    pit_init(TICK_HZ);
+    interrupts_init();
+    timer_init(TICK_HZ);
     running_flag = 1;
-    asm volatile("sti");
+    irq_enable();
 }
 
 int task_create(void (*entry)(void), const char *name) {
@@ -336,7 +297,7 @@ int task_create(void (*entry)(void), const char *name) {
     slot = (int)slot_count;
     t = &tasks[slot];
     t->stack = stack;
-    t->esp = build_stack(stack, entry);
+    t->sp = context_init(stack, STACK_SIZE, entry);
     t->state = TASK_READY;
     t->id = next_id++;
     t->queue = 0;
@@ -354,7 +315,7 @@ void task_yield(void) {
     if (!running_flag) {
         return;
     }
-    asm volatile("int $0x81" : : : "memory");
+    context_yield();
 }
 
 void task_sleep(unsigned int ms) {
