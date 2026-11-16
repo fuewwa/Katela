@@ -22,7 +22,7 @@ jobs:
       - name: Build
         run: |
           make clean
-          make
+          make ARCH=x86
 
       - name: Verify artifacts
         run: |
